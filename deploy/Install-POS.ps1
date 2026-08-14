@@ -31,7 +31,7 @@ try {
         & (Join-Path $PSScriptRoot "Install-BackupTask.ps1") -At $BackupTime
     }
     Write-Host "Retail POS $($health.version) installed and healthy."
-    Write-Host "Create the first owner separately if this is a new database: docker compose run --rm web python manage.py createsuperuser"
+    Write-Host "Bootstrap the shop, terminal, and first owner for a new database: docker compose run --rm web python manage.py bootstrap_pos"
 }
 catch {
     if (-not [string]::IsNullOrWhiteSpace($priorVersion)) {

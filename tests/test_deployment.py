@@ -61,13 +61,25 @@ class DeploymentContractTests(SimpleTestCase):
 
     def test_release_and_backup_contracts_are_present(self):
         build = (self.root / "deploy/Build-Release.ps1").read_text(encoding="utf-8")
+        install = (self.root / "deploy/Install-POS.ps1").read_text(encoding="utf-8")
         update = (self.root / "deploy/Install-Update.ps1").read_text(encoding="utf-8")
         backup = (self.root / "deploy/Backup-Database.ps1").read_text(encoding="utf-8")
+        runbook = (self.root / "deploy/README.md").read_text(encoding="utf-8")
+        normalized_runbook = " ".join(runbook.split())
 
         self.assertIn("Get-FileHash -Algorithm SHA256", build)
         self.assertIn("schema_version = 1", build)
         self.assertIn('Join-Path $root "docker/postgres"', build)
+        self.assertIn("python manage.py bootstrap_pos", install)
+        self.assertNotIn("createsuperuser", install)
         self.assertIn('Purpose "pre-update-', update)
         self.assertIn("pg_dump", backup)
         self.assertIn("pg_restore --list", backup)
         self.assertIn('Filter "pos-*.dump"', backup)
+        self.assertIn("Immutable extracted release", runbook)
+        self.assertIn("Permanent configuration, scripts, logs, and backups", runbook)
+        self.assertIn("Docker named volume", runbook)
+        self.assertIn(
+            "never copy `.env.example` over an existing shop `.env`",
+            normalized_runbook,
+        )

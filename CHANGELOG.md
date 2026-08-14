@@ -14,6 +14,10 @@ All notable public changes will be documented in this file. The project follows
 
 ### Changed
 
+- Deployment guidance now separates immutable release packages from the permanent shop
+  installation and provides complete first-install and update commands.
+- Initial installation now directs operators to `bootstrap_pos`, which creates the required shop,
+  terminal, sequences, and owner account.
 - Product, architecture, milestone-planning, and completion documents now use a structured `docs/`
   hierarchy with checked internal links.
 - Compose project identity is configurable and persistent through `COMPOSE_PROJECT_NAME`, allowing

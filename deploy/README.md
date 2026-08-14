@@ -40,9 +40,53 @@ signature.
 
 ## 3. Initial installation
 
-1. Extract the release zip to `C:\RetailPOS\incoming\pos-codex-1.0.0`.
-2. Copy the extracted `runtime` contents into `C:\RetailPOS`.
-3. Create and edit production configuration:
+The downloaded release and permanent installation serve different purposes:
+
+```text
+C:\RetailPOS\incoming\pos-codex-1.0.0\  Immutable extracted release
+C:\RetailPOS\                            Permanent configuration, scripts, logs, and backups
+```
+
+`Install-POS.ps1` imports and starts the packaged application, but it does not copy `runtime` into
+the permanent installation. Complete both steps below. Do not run the installer from inside the
+`incoming` directory.
+
+1. Extract the release zip and verify its layout:
+
+```powershell
+$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.0.0.zip"
+$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.0.0"
+
+New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
+Expand-Archive -LiteralPath $releaseZip -DestinationPath $releaseDirectory
+
+Get-ChildItem $releaseDirectory
+```
+
+The extracted directory must directly contain `release.json`, `pos-codex-1.0.0.tar`, and
+`runtime`. If those entries are inside another nested `pos-codex-1.0.0` directory, use that nested
+directory as `$releaseDirectory` instead.
+
+2. Copy the packaged runtime into the permanent installation:
+
+```powershell
+if (Test-Path C:\RetailPOS\.env) {
+    throw "An existing installation was detected. Follow the update procedure instead."
+}
+
+New-Item -ItemType Directory -Force -Path C:\RetailPOS | Out-Null
+Copy-Item -Path "$releaseDirectory\runtime\*" -Destination C:\RetailPOS -Recurse -Force
+
+Set-Location C:\RetailPOS
+Get-ChildItem compose.yaml, .env.example, deploy, docker
+```
+
+The permanent directory now owns Compose and the operational scripts. Keep the extracted release
+directory because the installer reads its manifest and Docker image. PostgreSQL data remains in the
+Docker named volume owned by the permanent installation's `COMPOSE_PROJECT_NAME`.
+
+3. Create and edit production configuration. Do this only for the first installation; never copy
+`.env.example` over an existing shop `.env`:
 
 ```powershell
 Set-Location C:\RetailPOS
@@ -54,7 +98,8 @@ Set `DJANGO_DEBUG=false`. Replace every `replace-...` value with a unique secret
 `POS_APP_BIND=127.0.0.1`, localhost allowed hosts/origins, and the initial `TILL-1` terminal.
 Keep `COMPOSE_PROJECT_NAME` stable for the lifetime of the installation because it identifies the
 Docker containers and database volume. Use a unique value such as `pos_codex_test` for a separate
-test installation on the same computer; never reuse one project's ports for another project.
+test installation on the same computer; never reuse one project's ports for another project. The
+installer sets `POS_APP_VERSION` from the verified release manifest.
 
 Generate a Django secret without uploading it anywhere:
 
@@ -64,7 +109,7 @@ $bytes = New-Object byte[] 48
 [Convert]::ToBase64String($bytes)
 ```
 
-4. Install and start:
+4. From the permanent installation directory, install and start using the extracted release:
 
 ```powershell
 .\deploy\Install-POS.ps1 `
@@ -72,11 +117,17 @@ $bytes = New-Object byte[] 48
   -InstallDailyBackupTask
 ```
 
-5. For a new database only, create/bootstrap the first owner interactively:
+The installer must report that Retail POS `1.0.0` is healthy. If it fails, do not delete volumes or
+retry with a different `COMPOSE_PROJECT_NAME`; inspect the displayed error first.
+
+5. For a new database only, bootstrap the shop, terminal, document sequences, and first owner
+interactively:
 
 ```powershell
 docker compose run --rm web python manage.py bootstrap_pos
 ```
+
+Do not substitute Django's `createsuperuser`; it does not create the required shop and terminal.
 
 6. Open `http://127.0.0.1:8000/accounts/login/`, sign in, then run:
 
@@ -129,12 +180,41 @@ only from the configured primary backup directory.
 Before maintenance, finish/hold the current customer order and tell the cashier the POS will be
 briefly unavailable.
 
-1. Transfer and extract the new package under `C:\RetailPOS\incoming`.
-2. Copy its `runtime` contents over `C:\RetailPOS`. This updates scripts/Compose but does not contain
-   or overwrite `.env`, database data, logs, or backups.
-   Confirm that the installed `.env` still contains its original `COMPOSE_PROJECT_NAME` before
-   continuing. A release update must reuse the existing Compose project and database volume.
-3. Run:
+An update uses the same two directories as installation: the new immutable release stays under
+`incoming`, while `C:\RetailPOS` remains the permanent installation. Do not clone the Git repository
+on the shop computer and do not use GitHub's automatic source archive.
+
+1. Transfer and extract the new deployable package:
+
+```powershell
+$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.1.0.zip"
+$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.1.0"
+
+New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
+Expand-Archive -LiteralPath $releaseZip -DestinationPath $releaseDirectory
+Get-ChildItem $releaseDirectory
+```
+
+Verify that `release.json`, `pos-codex-1.1.0.tar`, and `runtime` are directly inside
+`$releaseDirectory`.
+
+2. Confirm and preserve the existing installation identity, then update only the packaged runtime:
+
+```powershell
+Set-Location C:\RetailPOS
+Select-String -Path .env -Pattern '^COMPOSE_PROJECT_NAME='
+
+Copy-Item -Path "$releaseDirectory\runtime\*" -Destination C:\RetailPOS -Recurse -Force
+
+Select-String -Path .env -Pattern '^COMPOSE_PROJECT_NAME='
+```
+
+The value printed before and after the copy must be identical. The packaged runtime contains
+`.env.example`, not `.env`, so it updates scripts and Compose without replacing shop configuration,
+database data, logs, or backups. Never run `Copy-Item .env.example .env` during an update. A release
+update must reuse the existing Compose project and database volume.
+
+3. Run the update from the permanent installation:
 
 ```powershell
 Set-Location C:\RetailPOS
@@ -156,6 +236,10 @@ create another database project, change volumes, or run `down --volumes` to reso
 In the browser, sign in, open POS, add/remove one item in a temporary draft, open Products & Stock,
 Orders, and Reports, then clear the temporary draft. Do not create a fake completed sale on live
 data unless the owner explicitly wants a test transaction and reconciliation plan.
+
+Keep the current and immediately previous release packages under `incoming` until the update,
+backup, and rollback checks are complete. Cleanup must target only old `incoming` release folders;
+never remove `.env`, `var`, database volumes, or backups.
 
 ## 7. Failed update and rollback
 
