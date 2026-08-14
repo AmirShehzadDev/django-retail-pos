@@ -29,9 +29,7 @@ class DocumentationLayoutTests(SimpleTestCase):
         )
 
         misplaced = sorted(
-            path.name
-            for pattern in forbidden_patterns
-            for path in REPOSITORY_ROOT.glob(pattern)
+            path.name for pattern in forbidden_patterns for path in REPOSITORY_ROOT.glob(pattern)
         )
 
         self.assertEqual(misplaced, [])
