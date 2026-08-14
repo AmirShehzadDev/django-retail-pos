@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Shop settings | Retail POS{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl">
+    <p class="text-sm font-bold uppercase tracking-wider text-brand-700">Configuration</p>
+    <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-950">Shop settings</h1>
+    <p class="mt-2 text-sm leading-6 text-slate-600">Review the fixed operating details for this installation.</p>
+
+    <div class="mt-7 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        {% if can_edit %}
+            <form method="post" class="p-6 sm:p-8" novalidate>
+                {% csrf_token %}
+                {% include "partials/form_errors.html" %}
+                {% include "partials/field.html" with field=form.name %}
+                <button type="submit" class="btn-primary mt-6">Save shop name</button>
+            </form>
+        {% else %}
+            <div class="border-b border-brand-100 bg-brand-50 px-6 py-4 text-sm text-brand-900">
+                Only the shop owner can change these settings. Your access is read-only.
+            </div>
+            <div class="px-6 py-5 sm:px-8">
+                <p class="text-sm font-medium text-slate-500">Shop name</p>
+                <p class="mt-1 text-lg font-semibold text-slate-950">{{ shop.name }}</p>
+            </div>
+        {% endif %}
+
+        <dl class="grid gap-px border-t border-slate-200 bg-slate-200 sm:grid-cols-3">
+            <div class="bg-slate-50 px-6 py-5"><dt class="text-sm font-medium text-slate-500">Currency</dt><dd class="mt-1 font-semibold text-slate-950">{{ shop.currency|default:"PKR" }}</dd></div>
+            <div class="bg-slate-50 px-6 py-5"><dt class="text-sm font-medium text-slate-500">Timezone</dt><dd class="mt-1 font-semibold text-slate-950">{{ shop.timezone|default:"Asia/Karachi" }}</dd></div>
+            <div class="bg-slate-50 px-6 py-5"><dt class="text-sm font-medium text-slate-500">Status</dt><dd class="mt-2">{% include "partials/status_badge.html" with active=shop.is_active %}</dd></div>
+        </dl>
+    </div>
+</div>
+{% endblock %}

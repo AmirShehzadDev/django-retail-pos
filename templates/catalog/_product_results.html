@@ -1,0 +1,64 @@
+<div class="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <tr>
+                    <th scope="col" class="px-4 py-3">Product</th>
+                    <th scope="col" class="px-4 py-3">Barcode / SKU</th>
+                    <th scope="col" class="px-4 py-3">Price</th>
+                    <th scope="col" class="px-4 py-3">Stock</th>
+                    <th scope="col" class="px-4 py-3">Status</th>
+                    <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for product in products %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3">
+                            <p class="font-semibold text-slate-950">{{ product.name }}</p>
+                            {% if is_catalog_manager and product.needs_review %}<span class="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-900">Needs review</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-slate-700">
+                            <p>{% if product.barcode %}{{ product.barcode }}{% else %}<span class="text-slate-500">No barcode</span>{% endif %}</p>
+                            {% if product.sku %}<p class="mt-0.5 text-xs text-slate-500">SKU {{ product.sku }}</p>{% endif %}
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 font-medium text-slate-950">PKR {{ product.selling_price|floatformat:"2g" }}</td>
+                        <td class="px-4 py-3 font-bold {% if product.stock_on_hand < 0 %}text-red-700{% else %}text-slate-950{% endif %}">
+                            {{ product.stock_on_hand }}{% if product.stock_on_hand < 0 %}<span class="ml-1 text-xs">Negative</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3">{% include "partials/status_badge.html" with active=product.is_active %}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-wrap justify-end gap-2">
+                                {% if is_catalog_manager and product.is_active %}
+                                    <a href="{% url 'inventory:receive' product.pk %}" class="btn-primary !min-h-9 !px-3 !py-1.5" data-product-modal-url="{% url 'inventory:receive' product.pk %}">Receive</a>
+                                    <a href="{% url 'inventory:adjust' product.pk %}" class="btn-secondary !min-h-9 !px-3 !py-1.5" data-product-modal-url="{% url 'inventory:adjust' product.pk %}">Adjust</a>
+                                {% endif %}
+                                {% if is_catalog_manager %}<a href="{% url 'catalog:product_edit' product.pk %}" class="btn-secondary !min-h-9 !px-3 !py-1.5" data-product-modal-url="{% url 'catalog:product_edit' product.pk %}">Edit</a>{% endif %}
+                                <a href="{% url 'catalog:product_detail' product.pk %}" class="font-semibold text-brand-700 hover:underline self-center" data-product-modal-url="{% url 'catalog:product_detail' product.pk %}">View details</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-4 py-12 text-center text-slate-600">
+                            <p>No products match these filters.</p>
+                            {% if offer_create_barcode %}
+                                <a href="{% url 'catalog:product_create' %}?barcode={{ offer_create_barcode|urlencode }}" class="btn-primary mt-4" data-product-modal-url="{% url 'catalog:product_create' %}?barcode={{ offer_create_barcode|urlencode }}">Create product with barcode {{ offer_create_barcode }}</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+    <nav aria-label="Product pages" class="mt-5 flex items-center justify-between gap-4 text-sm">
+        <p class="text-slate-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}<a class="btn-secondary" data-product-results-link href="?{% if query_string %}{{ query_string }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+            {% if page_obj.has_next %}<a class="btn-secondary" data-product-results-link href="?{% if query_string %}{{ query_string }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+        </div>
+    </nav>
+{% endif %}

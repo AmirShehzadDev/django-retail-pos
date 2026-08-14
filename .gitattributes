@@ -1,0 +1,18 @@
+# Repository text files use UTF-8 with LF line endings.
+* text=auto eol=lf
+
+# Windows command scripts retain their native line endings.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Common binary files must not be normalized as text.
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+

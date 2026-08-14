@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ order.order_number }} | Retail POS{% endblock %}
+{% block content %}
+<div data-order-detail>{% include "sales/_order_detail_content.html" %}</div>
+<dialog data-correction-dialog class="m-auto w-[min(96vw,64rem)] rounded-2xl p-0 shadow-2xl backdrop:bg-slate-950/50"></dialog>
+{% endblock %}
+{% block extra_scripts %}<script src="{% static 'js/order_corrections.js' %}?v=20260806.1" defer></script>{% endblock %}

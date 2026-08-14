@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} | Products | Retail POS{% endblock %}
+
+{% block content %}
+<nav aria-label="Breadcrumb" class="mb-5 text-sm text-slate-600">
+    <a href="{% url 'catalog:product_list' %}" class="font-semibold text-brand-700 hover:underline">Products</a>
+    <span class="mx-2" aria-hidden="true">/</span>
+    <span aria-current="page">{{ product.name }}</span>
+</nav>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+        <div class="flex flex-wrap items-center gap-3">
+            <h1 class="text-3xl font-bold tracking-tight text-slate-950">{{ product.name }}</h1>
+            {% include "partials/status_badge.html" with active=product.is_active %}
+            {% if product.stock_on_hand < 0 %}<span class="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800">Negative stock</span>{% endif %}
+        </div>
+        <p class="mt-2 text-lg text-slate-600">PKR {{ product.selling_price|floatformat:"2g" }}</p>
+    </div>
+    <a href="{% url 'catalog:product_list' %}" class="btn-secondary">Back to products</a>
+</div>
+
+<div class="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-950" role="status">
+    Stock is informational and may change before checkout. Browsing products and active orders do not reserve or change it.
+</div>
+
+{% if not product.is_active %}
+    <div class="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950" role="status">
+        This product cannot be added to a new order.
+    </div>
+{% endif %}
+
+<section class="mt-7 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" aria-labelledby="product-details-heading">
+    <div class="border-b border-slate-200 px-5 py-4"><h2 id="product-details-heading" class="text-lg font-semibold text-slate-950">Product details</h2></div>
+    <dl class="grid gap-px bg-slate-200 sm:grid-cols-2">
+        <div class="bg-white px-5 py-4"><dt class="text-sm font-medium text-slate-500">Current stock</dt><dd class="mt-1 text-2xl font-bold {% if product.stock_on_hand < 0 %}text-red-700{% else %}text-slate-950{% endif %}">{{ product.stock_on_hand }}</dd></div>
+        <div class="bg-white px-5 py-4"><dt class="text-sm font-medium text-slate-500">Selling price</dt><dd class="mt-1 font-semibold text-slate-950">PKR {{ product.selling_price|floatformat:"2g" }}</dd></div>
+        <div class="bg-white px-5 py-4"><dt class="text-sm font-medium text-slate-500">Barcode</dt><dd class="mt-1 text-slate-950">{{ product.barcode|default:"No barcode" }}</dd></div>
+        <div class="bg-white px-5 py-4"><dt class="text-sm font-medium text-slate-500">SKU</dt><dd class="mt-1 text-slate-950">{{ product.sku|default:"No SKU" }}</dd></div>
+    </dl>
+</section>
+{% endblock %}

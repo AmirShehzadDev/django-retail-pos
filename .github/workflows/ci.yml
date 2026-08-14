@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16.14-alpine
+        env:
+          POSTGRES_DB: pos_codex
+          POSTGRES_USER: pos_app
+          POSTGRES_PASSWORD: ci-database-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pos_app -d pos_codex"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      DJANGO_SECRET_KEY: ci-only-secret-key-that-is-not-used-outside-github-actions
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost
+      DJANGO_CSRF_TRUSTED_ORIGINS: http://127.0.0.1:8000
+      POS_DB_NAME: pos_codex
+      POS_DB_USER: pos_app
+      POS_DB_PASSWORD: ci-database-password
+      POS_DB_HOST: 127.0.0.1
+      POS_DB_PORT: "5432"
+      POS_TEST_DB_NAME: test_pos_codex
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements/development.txt
+          npm ci
+
+      - name: Static and migration checks
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python -m pip check
+          ruff check .
+          ruff format --check .
+
+      - name: JavaScript and CSS checks
+        run: |
+          node --check static/js/app.js
+          node --check static/js/pos.js
+          node --check static/js/products.js
+          node --check static/js/order_corrections.js
+          node --test static/js/*.test.js
+          npm run css:build
+          git diff --exit-code -- static/css/app.css
+
+      - name: Django tests
+        run: python manage.py test --noinput
+
+      - name: Static collection
+        run: python manage.py collectstatic --noinput

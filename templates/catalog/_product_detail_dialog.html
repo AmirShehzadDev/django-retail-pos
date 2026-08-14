@@ -1,0 +1,56 @@
+<div class="min-h-full p-5 sm:p-7">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-2xl font-bold text-slate-950">{{ product.name }}</h2>
+                {% include "partials/status_badge.html" with active=product.is_active %}
+                {% if is_catalog_manager and product.needs_review %}<span class="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-900">Needs review</span>{% endif %}
+            </div>
+            <p class="mt-1 text-sm text-slate-600">{{ product.barcode|default:"No barcode" }}{% if product.sku %} &middot; SKU {{ product.sku }}{% endif %}</p>
+        </div>
+        <button type="button" class="flex size-11 shrink-0 items-center justify-center rounded-lg text-2xl text-slate-600 hover:bg-slate-100" aria-label="Close dialog" data-product-dialog-close>&times;</button>
+    </div>
+
+    <dl class="mt-5 grid gap-3 sm:grid-cols-2">
+        <div class="rounded-xl bg-slate-50 p-4"><dt class="text-sm text-slate-600">Selling price</dt><dd class="mt-1 text-xl font-bold text-slate-950">PKR {{ product.selling_price|floatformat:"2g" }}</dd></div>
+        <div class="rounded-xl bg-slate-50 p-4"><dt class="text-sm text-slate-600">Current stock</dt><dd class="mt-1 text-xl font-bold {% if product.stock_on_hand < 0 %}text-red-700{% else %}text-slate-950{% endif %}">{{ product.stock_on_hand }}</dd></div>
+        {% if is_catalog_manager %}
+            <div class="rounded-xl bg-slate-50 p-4"><dt class="text-sm text-slate-600">Cost price</dt><dd class="mt-1 font-semibold text-slate-950">{% if product.cost_price is not None %}PKR {{ product.cost_price|floatformat:"2g" }}{% else %}Not provided{% endif %}</dd></div>
+            <div class="rounded-xl bg-slate-50 p-4"><dt class="text-sm text-slate-600">Review</dt><dd class="mt-1 font-semibold text-slate-950">{% if product.needs_review %}Needs review{% else %}Reviewed{% endif %}</dd></div>
+        {% endif %}
+    </dl>
+
+    {% if is_catalog_manager %}
+        <div class="mt-5 flex flex-wrap gap-2">
+            {% if product.is_active %}
+                <a href="{% url 'inventory:receive' product.pk %}" class="btn-primary" data-product-modal-url="{% url 'inventory:receive' product.pk %}">Receive stock</a>
+                <a href="{% url 'inventory:adjust' product.pk %}" class="btn-secondary" data-product-modal-url="{% url 'inventory:adjust' product.pk %}">Adjust stock</a>
+            {% endif %}
+            <a href="{% url 'catalog:product_edit' product.pk %}" class="btn-secondary" data-product-modal-url="{% url 'catalog:product_edit' product.pk %}">Edit</a>
+            <a href="{% url 'catalog:product_status' product.pk %}" class="btn-secondary" data-product-modal-url="{% url 'catalog:product_status' product.pk %}">{% if product.is_active %}Deactivate{% else %}Reactivate{% endif %}</a>
+        </div>
+        {% if product.needs_review %}
+            <form method="post" action="{% url 'catalog:product_review' product.pk %}" class="mt-4" data-product-modal-form>
+                {% csrf_token %}<button type="submit" class="btn-secondary">Mark reviewed</button>
+            </form>
+        {% endif %}
+
+        <section class="mt-7 border-t border-slate-200 pt-5" aria-labelledby="recent-movements-heading">
+            <div class="flex items-center justify-between gap-3">
+                <h3 id="recent-movements-heading" class="text-lg font-bold text-slate-950">Recent stock movements</h3>
+                <a href="{% url 'inventory:movement_list' %}?q={{ product.name|urlencode }}" class="text-sm font-semibold text-brand-700 hover:underline">View all</a>
+            </div>
+            <div class="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200">
+                {% for movement in recent_movements|slice:":10" %}
+                    <div class="grid grid-cols-[auto_1fr_auto] gap-3 px-3 py-3 text-sm">
+                        <span class="font-bold {% if movement.quantity_change > 0 %}text-emerald-700{% else %}text-slate-950{% endif %}">{% if movement.quantity_change > 0 %}+{% endif %}{{ movement.quantity_change }}</span>
+                        <span class="min-w-0 text-slate-700">{{ movement.get_movement_type_display }} &middot; {{ movement.reason }}</span>
+                        <span class="whitespace-nowrap text-xs text-slate-500">{{ movement.created_at|date:"d M, g:i A" }}</span>
+                    </div>
+                {% empty %}<p class="px-3 py-6 text-center text-sm text-slate-600">No stock movements recorded.</p>{% endfor %}
+            </div>
+        </section>
+    {% else %}
+        <p class="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">Stock is informational and may change before checkout.</p>
+    {% endif %}
+</div>

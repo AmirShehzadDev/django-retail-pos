@@ -1,0 +1,68 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging and build output
+build/
+dist/
+releases/
+*.egg-info/
+.eggs/
+node_modules/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Django runtime output
+db.sqlite3
+db.sqlite3-journal
+var/
+staticfiles/
+collected_static/
+media/
+uploads/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# Database dumps and backups
+*.sql
+*.dump
+*.backup
+*.bak
+backup/
+backups/
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+
+# Windows and macOS metadata
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store

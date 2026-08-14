@@ -1,0 +1,214 @@
+<section id="pos-draft-panel" class="h-full min-h-0" data-pos-panel aria-labelledby="draft-panel-heading">
+    {% if needs_initial_draft %}
+        <div class="flex min-h-[24rem] h-full items-center justify-center border border-slate-200 bg-white p-6 text-center">
+            <div>
+                <h1 id="draft-panel-heading" class="text-lg font-black text-slate-950">Preparing Order 1</h1>
+                <p class="mt-1 text-sm text-slate-600">Creating the first saved order on {{ terminal.code }}.</p>
+                <form method="post" action="{% url 'sales:start_workspace' %}" class="mt-4" data-pos-initial-start data-pos-success="Order 1 is ready.">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex h-10 items-center rounded-lg bg-brand-700 px-4 text-sm font-bold text-white">Start Order 1</button>
+                </form>
+            </div>
+        </div>
+    {% elif selected_draft %}
+        <div class="grid h-full min-h-0 gap-2 lg:grid-cols-[minmax(0,13fr)_minmax(18rem,7fr)] lg:gap-0 lg:overflow-hidden" data-pos-workspace-grid>
+            <section class="flex min-h-[32rem] flex-col overflow-hidden border border-slate-200 bg-white lg:min-h-0 lg:border-r-0">
+                <header class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-3 py-2">
+                    <div class="min-w-0">
+                        <h1 id="draft-panel-heading" class="truncate text-sm font-black text-slate-950">Order {{ selected_draft.slot }} <span class="font-semibold text-slate-500">· {{ selected_draft.item_count }} item{{ selected_draft.item_count|pluralize }}</span></h1>
+                        <p class="truncate text-xs text-slate-500">Cashier: {% firstof selected_draft.current_cashier.get_full_name selected_draft.current_cashier.username %}</p>
+                    </div>
+                    {% if can_edit_selected and selected_draft.item_count %}
+                        <a href="{% url 'sales:draft_clear' selected_draft.pk %}" class="shrink-0 rounded-md px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-600" data-pos-clear-trigger>Clear order</a>
+                    {% elif can_close_selected_tab %}
+                        <form method="post" action="{% url 'sales:draft_close' selected_draft.pk %}" class="shrink-0" data-pos-mutation data-pos-toast-success data-pos-success="Order {{ selected_draft.slot }} tab closed.">
+                            {% csrf_token %}{% for hidden in close_form.hidden_fields %}{{ hidden }}{% endfor %}
+                            <button type="submit" class="rounded-md px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-600">Close tab</button>
+                        </form>
+                    {% endif %}
+                </header>
+
+                {% if can_edit_selected and selected_draft.item_count %}
+                    <dialog class="m-auto w-[min(28rem,calc(100%-2rem))] rounded-xl border border-slate-200 bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-slate-950/50" aria-labelledby="clear-order-title" aria-describedby="clear-order-description" data-pos-clear-dialog>
+                        <form method="post" action="{% url 'sales:draft_clear' selected_draft.pk %}" class="p-5" data-pos-mutation data-pos-clear-form data-pos-toast-success data-pos-success="Order {{ selected_draft.slot }} cleared.">
+                            {% csrf_token %}{% for hidden in clear_form.hidden_fields %}{{ hidden }}{% endfor %}
+                            <h2 id="clear-order-title" class="text-lg font-black">Clear Order {{ selected_draft.slot }}?</h2>
+                            <p id="clear-order-description" class="mt-2 text-sm text-slate-600">{{ selected_draft.item_count }} item{{ selected_draft.item_count|pluralize }} - PKR {{ selected_draft.subtotal|floatformat:"2g" }}. This removes every product and cannot be undone.</p>
+                            <div class="mt-5 flex justify-end gap-2">
+                                <button type="button" class="inline-flex h-10 items-center rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600" data-pos-clear-cancel>Keep order</button>
+                                <button type="submit" class="inline-flex h-10 items-center rounded-lg bg-red-700 px-4 text-sm font-bold text-white hover:bg-red-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-600" data-pos-clear-confirm>Clear order</button>
+                            </div>
+                        </form>
+                    </dialog>
+                {% endif %}
+
+                {% if not can_edit_selected %}
+                    <div class="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-3 py-2">
+                        <p class="text-xs text-amber-950"><span class="font-black">Read-only order.</span> Assigned to {% firstof selected_draft.current_cashier.get_full_name selected_draft.current_cashier.username %}.</p>
+                        {% if can_take_over_selected %}<a href="{% url 'sales:draft_takeover' selected_draft.pk %}" class="inline-flex h-10 items-center rounded-lg bg-brand-700 px-3 text-sm font-bold text-white">Resume this order</a>{% endif %}
+                    </div>
+                {% else %}
+                    <form method="post" action="{% url 'sales:draft_scan' selected_draft.pk %}" class="flex shrink-0 items-end gap-2 border-b border-slate-200 p-2" data-pos-mutation data-pos-scan-form data-pos-success="Product added.">
+                        {% csrf_token %}{% for hidden in scan_form.hidden_fields %}{{ hidden }}{% endfor %}
+                        <div class="min-w-0 flex-1">
+                            <label for="pos-barcode" class="block text-xs font-bold text-slate-700">Scan barcode</label>
+                            <input type="text" name="barcode" maxlength="64" autocomplete="off" placeholder="Scan or type barcode" id="pos-barcode" class="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100" data-pos-scanner>
+                        </div>
+                        <button type="submit" class="inline-flex h-10 items-center rounded-lg bg-brand-700 px-4 text-sm font-bold text-white hover:bg-brand-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600">Add</button>
+                    </form>
+                {% endif %}
+
+                {% if selected_shortages %}
+                    <div class="shrink-0 border-b border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-950">Stock warning: {% for warning in selected_shortages %}{{ warning.item.product_name }} will be {{ warning.projected }}{% if not forloop.last %}; {% endif %}{% endfor %}. Completing the sale records this acknowledgement.</div>
+                {% endif %}
+
+                <div class="min-h-0 flex-1 overflow-y-auto" data-pos-cart-scroll>
+                    {% if line_controls %}
+                        <div>{% for control in line_controls %}{% include "sales/partials/draft_line.html" with control=control %}{% endfor %}</div>
+                    {% else %}
+                        <div class="flex h-full min-h-40 items-center justify-center p-4 text-center">
+                            <div><p class="text-sm font-bold text-slate-700">This order is empty</p><p class="mt-1 text-xs text-slate-500">Scan a barcode or add a product from the catalogue.</p></div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if can_edit_selected %}
+                    <footer class="shrink-0 border-t border-slate-800 bg-slate-950 px-3 py-2 text-white">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-300">Order total</p>
+                                <p class="whitespace-nowrap text-2xl font-black leading-7">PKR {{ selected_draft.subtotal|floatformat:"2g" }}</p>
+                            </div>
+                            <button type="button" class="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-400 px-5 text-sm font-black text-slate-950 hover:bg-emerald-300 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 disabled:cursor-not-allowed disabled:opacity-50" data-pos-checkout-trigger {% if not selected_draft.item_count %}disabled{% endif %}>Complete sale</button>
+                        </div>
+                        {% if selected_draft.item_count %}
+                            <noscript>
+                                <form method="post" action="{% url 'sales:checkout' selected_draft.pk %}" class="mt-2 grid items-end gap-2 sm:grid-cols-[minmax(10rem,1fr)_auto]">
+                                    {% csrf_token %}{% for hidden in checkout_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                    <div>
+                                        <label for="noscript_cash_received" class="block text-xs font-bold text-slate-200">Cash received</label>
+                                        <input type="number" name="cash_received" value="{{ checkout_form.cash_received.value }}" min="0" step="0.01" inputmode="decimal" required id="noscript_cash_received" class="h-10 w-full rounded-lg border border-slate-600 bg-white px-3 text-sm font-bold text-slate-950">
+                                    </div>
+                                    <button type="submit" class="inline-flex h-10 items-center justify-center rounded-lg bg-emerald-400 px-4 text-sm font-black text-slate-950">Complete sale</button>
+                                </form>
+                            </noscript>
+                        {% endif %}
+                    </footer>
+
+                    {% if selected_draft.item_count %}
+                        <dialog class="m-auto w-[min(38rem,calc(100%-2rem))] max-h-[calc(100vh-2rem)] rounded-xl border border-slate-200 bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-slate-950/60" aria-labelledby="checkout-dialog-title" aria-describedby="checkout-dialog-description" data-pos-checkout-dialog>
+                            <div class="flex max-h-[calc(100vh-2rem)] flex-col">
+                                <header class="shrink-0 border-b border-slate-200 px-4 py-3">
+                                    <h2 id="checkout-dialog-title" class="text-lg font-black">Complete sale</h2>
+                                    <p id="checkout-dialog-description" class="mt-0.5 text-xs text-slate-600">Review the order and enter the cash received.</p>
+                                </header>
+                                <section class="min-h-0 overflow-y-auto border-b border-slate-200" aria-label="Order line preview" data-pos-checkout-lines>
+                                    <ul class="divide-y divide-slate-100" role="list">
+                                        {% for control in line_controls %}
+                                            <li class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 px-4 py-2 text-sm" data-pos-checkout-line>
+                                                <div class="min-w-0">
+                                                    <p class="truncate font-bold text-slate-950">{{ control.item.product_name }}</p>
+                                                    <p class="text-xs text-slate-500">{{ control.item.quantity }} &times; PKR {{ control.item.unit_price|floatformat:"2g" }}</p>
+                                                </div>
+                                                <p class="self-center whitespace-nowrap font-black">PKR {{ control.item.line_total|floatformat:"2g" }}</p>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </section>
+                                <form method="post" action="{% url 'sales:checkout' selected_draft.pk %}" class="shrink-0 p-4" data-pos-mutation data-pos-checkout data-pos-success="Sale completed." data-pos-total="{{ checkout_total }}">
+                                    {% csrf_token %}{% for hidden in checkout_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                    <div class="grid gap-3 sm:grid-cols-2">
+                                        <div class="rounded-lg bg-slate-100 px-3 py-2">
+                                            <p class="text-xs font-semibold text-slate-500">Order total</p>
+                                            <p class="whitespace-nowrap text-2xl font-black leading-7">PKR {{ selected_draft.subtotal|floatformat:"2g" }}</p>
+                                        </div>
+                                        <div class="rounded-lg bg-slate-950 px-3 py-2 text-white">
+                                            <p class="text-xs font-semibold text-slate-300">Change</p>
+                                            <p class="whitespace-nowrap text-2xl font-black leading-7" data-pos-change>PKR 0.00</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <label for="id_cash_received" class="block text-xs font-bold text-slate-700">Cash received</label>
+                                        <input type="number" name="cash_received" value="{{ checkout_form.cash_received.value }}" min="0" step="0.01" inputmode="decimal" autocomplete="off" required id="id_cash_received" class="mt-1 h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-xl font-black text-slate-950 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-100" data-pos-cash-received {% if checkout_form.cash_received.errors %}aria-invalid="true" aria-describedby="checkout-cash-errors"{% endif %}>
+                                        {% if checkout_form.cash_received.errors %}<div id="checkout-cash-errors" class="mt-1 text-sm font-semibold text-red-700" role="alert">{% for error in checkout_form.cash_received.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+                                    </div>
+                                    <div class="mt-4 flex justify-end gap-2">
+                                        <button type="submit" class="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-500 px-5 text-sm font-black text-slate-950 hover:bg-emerald-400 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" data-pos-checkout-confirm>Complete sale</button>
+                                        <button type="button" class="inline-flex h-11 items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600" data-pos-checkout-cancel>Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </dialog>
+                    {% endif %}
+                {% else %}
+                    <footer class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-800 bg-slate-950 px-3 py-2 text-white">
+                        <div><p class="text-xs font-semibold text-slate-300">Order total</p><p class="text-2xl font-black leading-7">PKR {{ selected_draft.subtotal|floatformat:"2g" }}</p></div>
+                        <p class="text-xs text-slate-300">Resume the order before making changes or completing the sale.</p>
+                    </footer>
+                {% endif %}
+            </section>
+
+            <aside class="flex min-h-[24rem] flex-col overflow-hidden border border-slate-200 bg-slate-50 lg:min-h-0" aria-labelledby="catalogue-heading">
+                <div class="shrink-0 border-b border-slate-200 bg-white p-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <h2 id="catalogue-heading" class="text-sm font-black text-slate-950">Product catalogue</h2>
+                        {% if search_query %}<a class="text-xs font-bold text-brand-700 underline" href="{% url 'sales:workspace' %}?draft={{ selected_draft.pk }}">Clear</a>{% endif %}
+                    </div>
+                    <form method="get" action="{% url 'sales:workspace' %}" class="mt-1.5 flex gap-2" role="search">
+                        <input type="hidden" name="draft" value="{{ selected_draft.pk }}">
+                        <label for="id_q" class="sr-only">Search products</label>
+                        <input type="search" name="q" value="{{ search_form.q.value|default_if_none:'' }}" maxlength="200" placeholder="Name, barcode, or SKU" id="id_q" class="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 px-3 text-sm focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100">
+                        <button type="submit" class="inline-flex h-10 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-700 hover:bg-slate-100">Search</button>
+                    </form>
+                </div>
+                <div class="min-h-0 flex-1 overflow-y-auto p-2" data-pos-catalogue-scroll>
+                    {% if search_product_forms %}
+                        <ul class="grid grid-cols-2 gap-2" role="list">
+                            {% for control in search_product_forms %}
+                                <li>
+                                    {% if can_edit_selected %}
+                                        <form method="post" action="{% url 'sales:draft_add_product' selected_draft.pk %}" class="h-full" data-pos-mutation data-pos-success="Product added." data-pos-product-tile>
+                                            {% csrf_token %}{% for hidden in control.form.hidden_fields %}{{ hidden }}{% endfor %}
+                                            <button type="submit" class="flex h-full min-h-24 w-full flex-col rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:border-brand-400 hover:bg-brand-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+                                                <span class="line-clamp-2 text-sm font-bold leading-5 text-slate-950">{{ control.product.name }}</span>
+                                                <span class="mt-auto pt-2 text-sm font-black text-brand-800">PKR {{ control.product.selling_price|floatformat:"2g" }}</span>
+                                                <span class="block w-full truncate text-xs text-slate-500">Stock {{ control.product.stock_on_hand }}{% if control.product.barcode %} · {{ control.product.barcode }}{% elif control.product.sku %} · {{ control.product.sku }}{% endif %}</span>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <div class="flex h-full min-h-24 flex-col rounded-lg border border-slate-200 bg-white p-2.5" data-pos-product-tile>
+                                            <p class="line-clamp-2 text-sm font-bold leading-5 text-slate-950">{{ control.product.name }}</p>
+                                            <p class="mt-auto pt-2 text-sm font-black text-slate-800">PKR {{ control.product.selling_price|floatformat:"2g" }}</p>
+                                            <p class="truncate text-xs text-slate-500">Stock {{ control.product.stock_on_hand }}{% if control.product.barcode %} · {{ control.product.barcode }}{% elif control.product.sku %} · {{ control.product.sku }}{% endif %}</p>
+                                        </div>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="flex min-h-40 items-center justify-center p-4 text-center"><p class="text-sm text-slate-600">No active products matched.</p></div>
+                    {% endif %}
+                </div>
+                <section class="mx-2 mb-2 mt-3 shrink-0 overflow-hidden rounded-lg border-2 border-brand-700 bg-white" aria-labelledby="recent-sales-heading" data-pos-recent-sales>
+                    <div class="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-100 px-2.5 py-2">
+                        <h2 id="recent-sales-heading" class="text-xs font-black uppercase tracking-wide text-slate-900">Recent sales</h2>
+                        <a href="{% url 'order_history:list' %}" class="text-xs font-bold text-brand-700 hover:underline">View all</a>
+                    </div>
+                    {% if recent_completed_orders %}
+                        <ul class="divide-y divide-slate-100" role="list">
+                            {% for order in recent_completed_orders %}
+                                <li class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 px-2.5 py-1.5 text-xs">
+                                    <div class="min-w-0"><p class="truncate font-black text-slate-900">{{ order.order_number }}</p><p class="text-slate-500">{{ order.completed_at|date:"H:i" }}</p></div>
+                                    <div class="text-right"><p class="font-black text-slate-900">PKR {{ order.final_total|floatformat:"2g" }}</p><p class="font-bold {% if order.payment.change_given > 0 %}text-emerald-700{% elif order.payment.change_given < 0 %}text-red-700{% else %}text-slate-500{% endif %}" data-pos-recent-change>Change PKR {% if order.payment.change_given > 0 %}+{% endif %}{{ order.payment.change_given|floatformat:"2g" }}</p></div>
+                                    <a href="{% url 'order_history:detail' order.order_number %}" class="inline-flex h-10 items-center rounded-md px-2 font-bold text-brand-700 hover:bg-brand-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600" aria-label="View {{ order.order_number }}">View</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="px-2.5 py-3 text-xs text-slate-500">No completed sales yet.</p>
+                    {% endif %}
+                </section>
+            </aside>
+        </div>
+    {% endif %}
+</section>

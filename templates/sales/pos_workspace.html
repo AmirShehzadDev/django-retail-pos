@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Point of sale | Retail POS{% endblock %}
+{% block app_header %}{% endblock %}
+{% block main_class %}min-h-screen w-full bg-slate-100 lg:h-screen lg:min-h-0 lg:overflow-hidden{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen flex-col text-sm lg:h-full lg:min-h-0" data-pos-workspace data-pos-shell data-pos-version="{{ selected_version }}">
+    <header class="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-3 py-2 lg:min-h-14 lg:flex-nowrap" aria-label="POS toolbar">
+        <a href="{% url 'core:home' %}" class="min-w-0 shrink-0 rounded-md px-1 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+            <span class="block max-w-44 truncate text-lg font-black leading-5 text-slate-950">{{ request.user.shop.name }}</span>
+            <span class="block text-xs text-slate-500">{{ terminal.name }} · {{ terminal.code }}</span>
+        </a>
+
+        <div class="min-w-0 flex-1 lg:ml-2" data-pos-tabs-slot>{% include "sales/partials/draft_tabs.html" %}</div>
+
+        <form method="post" action="{% url 'sales:draft_create' %}" class="shrink-0" data-pos-mutation data-pos-new-draft data-pos-success="New order ready." {% if needs_initial_draft or not can_create_draft %}hidden{% endif %}>
+            {% csrf_token %}
+            <button type="submit" class="inline-flex h-10 items-center rounded-lg bg-brand-700 px-3 text-sm font-bold text-white hover:bg-brand-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600">+ New order</button>
+        </form>
+
+        <nav aria-label="POS navigation" class="ml-auto flex shrink-0 items-center gap-1 border-l border-slate-200 pl-2">
+            <a href="{% url 'order_history:list' %}" class="inline-flex h-10 items-center rounded-lg px-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600">Orders</a>
+            <a href="{% url 'catalog:product_list' %}" class="inline-flex h-10 items-center rounded-lg px-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600">Products</a>
+            <div class="hidden max-w-32 px-2 text-right xl:block">
+                <p class="truncate text-sm font-bold text-slate-900">{% firstof request.user.get_full_name request.user.username %}</p>
+                <p class="text-xs text-slate-500">{{ request.user.get_role_display }}</p>
+            </div>
+            <a href="{% url 'core:home' %}" class="inline-flex h-10 items-center rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600">Exit POS</a>
+        </nav>
+    </header>
+    <p id="pos-live-status" class="sr-only" aria-live="assertive" aria-atomic="true" data-pos-status tabindex="-1"></p>
+    <div class="min-h-0 flex-1 p-2 lg:overflow-hidden" data-pos-panel-slot>{% include "sales/partials/draft_panel.html" %}</div>
+</div>
+<script src="{% static 'js/pos.js' %}?v=20260806.4" defer></script>
+{% endblock %}

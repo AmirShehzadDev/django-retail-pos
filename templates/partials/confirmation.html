@@ -1,0 +1,12 @@
+<section class="rounded-xl border border-slate-200 bg-slate-50 p-5" aria-labelledby="status-action-heading">
+    <h2 id="status-action-heading" class="text-base font-semibold text-slate-950">{{ heading }}</h2>
+    <p class="mt-1 text-sm leading-6 text-slate-600">{{ description }}</p>
+    <form method="post" action="{{ action_url }}" class="mt-4">
+        {% csrf_token %}
+        {% if destructive %}
+            <button type="submit" class="btn-danger">{{ button_label }}</button>
+        {% else %}
+            <button type="submit" class="btn-primary">{{ button_label }}</button>
+        {% endif %}
+    </form>
+</section>

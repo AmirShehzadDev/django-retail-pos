@@ -1,0 +1,61 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>{% block title %}Retail POS{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <script src="{% static 'js/app.js' %}?v=20260806.3" defer></script>
+</head>
+<body>
+    <a href="#main-content" class="sr-only z-50 rounded-md bg-white px-4 py-3 font-semibold text-brand-800 focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+        Skip to main content
+    </a>
+
+    {% block app_header %}
+    <header class="border-b border-brand-900 bg-brand-950 text-white">
+        <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+            <a class="rounded-md text-xl font-bold tracking-tight focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-white" href="{% url 'core:home' %}">
+                {% if request.user.is_authenticated and request.user.shop %}{{ request.user.shop.name }}{% else %}Retail POS{% endif %}
+            </a>
+
+            {% if request.user.is_authenticated %}
+                <nav aria-label="Primary navigation" class="order-3 flex w-full flex-wrap items-center gap-1 border-t border-white/15 pt-3 sm:order-2 sm:w-auto sm:border-0 sm:pt-0">
+                    <a href="{% url 'core:home' %}" class="rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white">Home</a>
+                    <a href="{% url 'sales:workspace' %}" class="rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white">POS</a>
+                    <a href="{% url 'order_history:list' %}" class="rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white">Orders</a>
+                    <a href="{% url 'catalog:product_list' %}" class="rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white">{% if request.user.role == "OWNER" or request.user.role == "ADMIN" %}Products &amp; Stock{% else %}Products{% endif %}</a>
+                    {% if request.user.role == "OWNER" or request.user.role == "ADMIN" %}
+                        <a href="{% url 'core:daily_summary' %}" class="rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white">Reports</a>
+                        <a href="{% url 'accounts:user_list' %}" class="rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white">Users</a>
+                        <a href="{% url 'core:shop_settings' %}" class="rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white">Shop settings</a>
+                    {% endif %}
+                </nav>
+
+                <div class="order-2 flex items-center gap-3 sm:order-3">
+                    <div class="hidden text-right sm:block">
+                        <p class="text-sm font-semibold">{% firstof request.user.get_full_name request.user.username %}</p>
+                        <p class="text-xs text-brand-200">{{ request.user.get_role_display }}</p>
+                    </div>
+                    <form method="post" action="{% url 'accounts:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex min-h-11 items-center rounded-lg border border-white/40 px-3 py-2 text-sm font-semibold hover:bg-white/10 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white">
+                            Log out
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+    {% endblock %}
+
+    {% include "partials/messages.html" %}
+
+    <main id="main-content" class="{% block main_class %}mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10{% endblock %}">
+        {% block content %}{% endblock %}
+    </main>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Summary | Retail POS{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+        <p class="text-sm font-bold uppercase tracking-wider text-brand-700">Reports</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-950">Daily summary</h1>
+        <p class="mt-2 text-sm text-slate-600">Cash activity for {{ summary.business_date|date:"l, d F Y" }} in Asia/Karachi.</p>
+    </div>
+    <a href="{% url 'core:audit_history' %}" class="btn-secondary">Audit trail</a>
+</div>
+
+{% include "partials/form_errors.html" with form=form %}
+<div class="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[auto_minmax(12rem,20rem)_auto_auto] sm:items-end">
+    <a href="{% url 'core:daily_summary' %}?date={{ previous_date|date:'Y-m-d' }}" class="btn-secondary justify-center" aria-label="Previous day">Previous</a>
+    <form method="get" class="contents">
+        <div>{% include "partials/field.html" with field=form.date %}</div>
+        <button type="submit" class="btn-primary justify-center">Show date</button>
+    </form>
+    <a href="{% url 'core:daily_summary' %}?date={{ next_date|date:'Y-m-d' }}" class="btn-secondary justify-center" aria-label="Next day">Next</a>
+</div>
+
+<section class="mt-6" aria-labelledby="sales-summary-heading">
+    <h2 id="sales-summary-heading" class="text-xl font-bold text-slate-950">Sales summary</h2>
+    <div class="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <article class="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
+            <p class="text-sm font-bold uppercase tracking-wide text-blue-800">Gross sales</p>
+            <p class="mt-2 text-2xl font-black text-blue-950">PKR {{ summary.gross_sales|floatformat:"2" }}</p>
+        </article>
+        <article class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+            <p class="text-sm font-bold uppercase tracking-wide text-amber-800">Returns</p>
+            <p class="mt-2 text-2xl font-black text-amber-950">PKR {{ summary.returns|floatformat:"2" }}</p>
+        </article>
+        <article class="rounded-2xl border border-red-200 bg-red-50 p-5 shadow-sm">
+            <p class="text-sm font-bold uppercase tracking-wide text-red-800">Voids</p>
+            <p class="mt-2 text-2xl font-black text-red-950">PKR {{ summary.voids|floatformat:"2" }}</p>
+        </article>
+        <article class="rounded-2xl border p-5 shadow-sm {% if summary.net_sales < 0 %}border-red-300 bg-red-100 text-red-950{% elif summary.net_sales > 0 %}border-emerald-300 bg-emerald-100 text-emerald-950{% else %}border-slate-200 bg-slate-100 text-slate-950{% endif %}">
+            <p class="text-sm font-bold uppercase tracking-wide">Net sales</p>
+            <p class="mt-2 text-3xl font-black">PKR {{ summary.net_sales|floatformat:"2" }}</p>
+        </article>
+    </div>
+</section>
+
+<section class="mt-6" aria-labelledby="cash-summary-heading">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="cash-summary-heading" class="text-xl font-bold text-slate-950">Cash and orders</h2>
+        <a href="{% url 'order_history:list' %}?date_from={{ summary.business_date|date:'Y-m-d' }}&amp;date_to={{ summary.business_date|date:'Y-m-d' }}" class="text-sm font-bold text-brand-700 hover:text-brand-900">View the day's orders</a>
+    </div>
+    <div class="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-sm font-semibold text-slate-600">Completed orders</p><p class="mt-2 text-2xl font-black">{{ summary.order_count }}</p></article>
+        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-sm font-semibold text-slate-600">Cash collected</p><p class="mt-2 text-2xl font-black">PKR {{ summary.cash_collected|floatformat:"2" }}</p></article>
+        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-sm font-semibold text-slate-600">Cash refunded</p><p class="mt-2 text-2xl font-black">PKR {{ summary.cash_refunded|floatformat:"2" }}</p></article>
+        <article class="rounded-xl border {% if summary.signed_change_total < 0 %}border-red-300 bg-red-50 text-red-950{% elif summary.signed_change_total > 0 %}border-emerald-300 bg-emerald-50 text-emerald-950{% else %}border-slate-200 bg-white{% endif %} p-4 shadow-sm"><p class="text-sm font-semibold">Signed change total</p><p class="mt-2 text-2xl font-black">PKR {{ summary.signed_change_total|floatformat:"2" }}</p></article>
+        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-sm font-semibold text-slate-600">Non-zero-change orders</p><p class="mt-2 text-2xl font-black">{{ summary.nonzero_change_count }}</p></article>
+    </div>
+    <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+        <p><strong>Reconciliation:</strong> Cash collected PKR {{ summary.cash_collected|floatformat:"2" }} minus signed change PKR {{ summary.signed_change_total|floatformat:"2" }} = gross sales PKR {{ summary.gross_reconciliation|floatformat:"2" }}.</p>
+        <p>After cash refunds of PKR {{ summary.cash_refunded|floatformat:"2" }}, net cash movement is PKR {{ summary.net_cash_movement|floatformat:"2" }}.</p>
+    </div>
+</section>
+
+<section class="mt-6" aria-labelledby="review-heading">
+    <div>
+        <h2 id="review-heading" class="text-xl font-bold text-slate-950">Current review alerts</h2>
+        <p class="mt-1 text-sm text-slate-600">These are current product conditions, not historical counts for the selected date.</p>
+    </div>
+    <div class="mt-3 grid gap-4 sm:grid-cols-2">
+        <a href="{% url 'catalog:product_list' %}?negative=on" class="group rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm hover:border-red-400">
+            <p class="text-sm font-bold uppercase tracking-wide text-red-800">Negative stock</p>
+            <p class="mt-2 text-3xl font-black text-red-950">{{ review_counts.negative_stock }}</p>
+            <p class="mt-2 text-sm text-red-900 group-hover:underline">Review filtered products</p>
+        </a>
+        <a href="{% url 'catalog:product_list' %}?needs_review=on" class="group rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm hover:border-amber-400">
+            <p class="text-sm font-bold uppercase tracking-wide text-amber-800">Cashier-created products</p>
+            <p class="mt-2 text-3xl font-black text-amber-950">{{ review_counts.quick_created_needing_review }}</p>
+            <p class="mt-2 text-sm text-amber-900 group-hover:underline">Review filtered products</p>
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Clear Order {{ draft.slot }} | Retail POS{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-xl">
+    <p class="text-sm font-bold uppercase tracking-wider text-red-700">Point of sale - {{ terminal.code }}</p>
+    <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-950">Clear Order {{ draft.slot }}?</h1>
+    <p class="mt-3 leading-7 text-slate-600">{{ draft.item_count }} item{{ draft.item_count|pluralize }} - PKR {{ draft.subtotal|floatformat:"2g" }}. This removes every product, keeps the tab open, and cannot be undone.</p>
+
+    <form method="post" class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6" novalidate>
+        {% csrf_token %}
+        {% include "partials/form_errors.html" %}
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'sales:workspace' %}?draft={{ draft.pk }}" class="btn-secondary">Keep order</a>
+            <button type="submit" class="btn-danger" data-autofocus>Clear order</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

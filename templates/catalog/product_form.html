@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | Retail POS{% endblock %}
+
+{% block content %}
+<nav aria-label="Breadcrumb" class="mb-5 text-sm text-slate-600">
+    <a href="{% url 'catalog:product_list' %}" class="font-semibold text-brand-700 hover:underline">Products &amp; Stock</a>
+    <span class="mx-2" aria-hidden="true">/</span>
+    <span aria-current="page">{{ page_title }}</span>
+</nav>
+
+<div class="max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-panel sm:p-8">
+    <h1 class="text-3xl font-bold tracking-tight text-slate-950">{{ page_title }}</h1>
+    {% if not product %}
+        <p class="mt-2 text-sm leading-6 text-slate-600">Optionally enter stock received now. It will be recorded as a real receipt movement.</p>
+    {% endif %}
+    <p class="mt-2 text-sm leading-6 text-slate-600">Required fields are marked with an asterisk.</p>
+    <form method="post" class="mt-7 space-y-5" novalidate data-disable-on-submit>
+        {% csrf_token %}
+        {% include "partials/form_errors.html" %}
+        {% for field in form.visible_fields %}{% include "partials/field.html" with field=field %}{% endfor %}
+        <div class="flex flex-wrap gap-3 border-t border-slate-200 pt-6">
+            <button type="submit" class="btn-primary">{{ submit_label }}</button>
+            {% if product %}
+                <a href="{% url 'catalog:product_detail' product.pk %}" class="btn-secondary">Cancel</a>
+            {% else %}
+                <a href="{% url 'catalog:product_list' %}" class="btn-secondary">Cancel</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+<div id="pos-draft-tabs" data-pos-tabs>
+    {% if drafts %}
+        <nav aria-label="Active orders" class="overflow-x-auto">
+            <ul class="flex min-w-max items-center gap-1" role="tablist">
+                {% for draft in drafts %}
+                    <li>
+                        <a href="{% url 'sales:workspace' %}?draft={{ draft.pk }}" class="flex h-10 min-w-28 items-center gap-2 rounded-lg border px-2.5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 {% if selected_draft.pk == draft.pk %}border-brand-600 bg-brand-50 text-brand-950{% else %}border-transparent bg-slate-100 text-slate-700 hover:border-slate-300{% endif %}" role="tab" aria-selected="{% if selected_draft.pk == draft.pk %}true{% else %}false{% endif %}" {% if selected_draft.pk == draft.pk %}aria-current="page"{% endif %}>
+                            <span class="leading-tight"><span class="block text-sm font-black">Order {{ draft.slot }}</span><span class="block text-xs font-semibold">PKR {{ draft.subtotal|floatformat:"2g" }}</span></span>
+                            <span class="ml-auto h-2 w-2 shrink-0 rounded-full {% if draft.current_cashier_id == request.user.pk %}bg-emerald-500{% else %}bg-amber-500{% endif %}" title="{% if draft.current_cashier_id == request.user.pk %}Yours{% else %}Read only{% endif %}"><span class="sr-only">{% if draft.current_cashier_id == request.user.pk %}Yours{% else %}Read only{% endif %}</span></span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    {% else %}
+        <p class="px-2 text-xs font-semibold text-slate-500">No active orders</p>
+    {% endif %}
+</div>

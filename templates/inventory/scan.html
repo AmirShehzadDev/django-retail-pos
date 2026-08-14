@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Receive inventory | Retail POS{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl">
+    <p class="text-sm font-bold uppercase tracking-wider text-brand-700">Products &amp; Stock fallback</p>
+    <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-950">Scan an item</h1>
+    <p class="mt-2 text-slate-600">Scan a barcode or type it and press Enter. Unknown barcodes open a prefilled product form.</p>
+
+    <section class="mt-7 rounded-2xl border border-slate-200 bg-white p-6 shadow-panel sm:p-8" aria-labelledby="scan-heading">
+        <h2 id="scan-heading" class="text-xl font-semibold text-slate-950">Find product by barcode</h2>
+        <form method="get" class="mt-5 space-y-5" role="search" novalidate>
+            {% include "partials/form_errors.html" %}
+            {% for field in form.visible_fields %}{% include "partials/field.html" with field=field %}{% endfor %}
+            <button type="submit" class="btn-primary">Continue</button>
+        </form>
+    </section>
+
+    <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5">
+        <h2 class="font-semibold text-slate-950">No usable barcode?</h2>
+        <p class="mt-1 text-sm text-slate-600">Search the catalog and select the product you want to receive.</p>
+        <a href="{% url 'catalog:product_list' %}" class="btn-secondary mt-4">Open Products &amp; Stock</a>
+    </div>
+
+    <div class="mt-6">
+        <a href="{% url 'inventory:movement_list' %}" class="font-semibold text-brand-700 hover:underline">View movement history</a>
+    </div>
+</div>
+{% endblock %}

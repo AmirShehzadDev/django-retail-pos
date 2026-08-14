@@ -1,0 +1,42 @@
+<article class="border-b border-slate-200 px-3 py-2 {% if not control.item.product.is_active %}bg-amber-50{% else %}bg-white{% endif %}" data-pos-cart-line>
+    <div class="grid items-center gap-x-3 gap-y-2 md:grid-cols-[minmax(10rem,1fr)_minmax(5.5rem,auto)_auto_minmax(6.5rem,auto)_auto]">
+        <div class="min-w-0">
+            <h4 class="truncate text-sm font-bold text-slate-950">{{ control.item.product_name }}</h4>
+            <p class="truncate text-xs text-slate-500">{% if control.item.product_barcode %}Barcode {{ control.item.product_barcode }}{% else %}No barcode{% endif %}</p>
+            {% if not control.item.product.is_active %}<p class="text-xs font-semibold text-amber-900">Inactive product &middot; quantity may only be reduced or removed</p>{% endif %}
+        </div>
+        <div>
+            <p class="text-xs font-semibold text-slate-500">Unit price</p>
+            <p class="whitespace-nowrap text-sm font-bold text-slate-800">PKR {{ control.item.unit_price|floatformat:"2g" }}</p>
+        </div>
+        {% if can_edit_selected %}
+            <div class="inline-flex items-center overflow-hidden rounded-lg border border-slate-300 bg-white" aria-label="Quantity controls for {{ control.item.product_name }}">
+                <form method="post" action="{% url 'sales:item_quantity' selected_draft.pk control.item.pk %}" data-pos-mutation data-pos-success="Quantity decreased.">
+                    {% csrf_token %}{% for hidden in control.quantity_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    <input type="hidden" name="quantity" value="{% if control.decreased_quantity %}{{ control.decreased_quantity }}{% else %}1{% endif %}">
+                    <button type="submit" class="flex h-10 w-10 items-center justify-center border-r border-slate-300 text-xl font-black text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400" aria-label="Decrease quantity for {{ control.item.product_name }}" title="Decrease quantity" {% if not control.decreased_quantity %}disabled{% endif %}>&minus;</button>
+                </form>
+                <span class="flex h-10 min-w-12 items-center justify-center px-2 text-base font-black text-slate-950" aria-label="Current quantity {{ control.item.quantity }}">{{ control.item.quantity }}</span>
+                <form method="post" action="{% url 'sales:item_quantity' selected_draft.pk control.item.pk %}" data-pos-mutation data-pos-success="Quantity increased.">
+                    {% csrf_token %}{% for hidden in control.quantity_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    <input type="hidden" name="quantity" value="{% if control.increased_quantity %}{{ control.increased_quantity }}{% else %}{{ control.item.quantity }}{% endif %}">
+                    <button type="submit" class="flex h-10 w-10 items-center justify-center border-l border-slate-300 text-xl font-black text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400" aria-label="Increase quantity for {{ control.item.product_name }}" title="Increase quantity" {% if not control.increased_quantity %}disabled{% endif %}>+</button>
+                </form>
+            </div>
+        {% else %}
+            <p class="text-sm font-bold text-slate-800">Qty {{ control.item.quantity }}</p>
+        {% endif %}
+        <div class="md:text-right">
+            <p class="text-xs font-semibold text-slate-500">Line total</p>
+            <p class="whitespace-nowrap text-sm font-black text-slate-950">PKR {{ control.item.line_total|floatformat:"2g" }}</p>
+        </div>
+        {% if can_edit_selected %}
+            <form method="post" action="{% url 'sales:item_remove' selected_draft.pk control.item.pk %}" class="justify-self-start md:justify-self-end" data-pos-mutation data-pos-success="Product removed.">
+                {% csrf_token %}{% for hidden in control.remove_form.hidden_fields %}{{ hidden }}{% endfor %}
+                <button type="submit" class="h-10 rounded-md px-2.5 text-xs font-bold text-red-700 hover:bg-red-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-600">Remove</button>
+            </form>
+        {% else %}
+            <span></span>
+        {% endif %}
+    </div>
+</article>

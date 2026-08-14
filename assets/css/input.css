@@ -1,0 +1,70 @@
+@import "tailwindcss" source(none);
+
+@source "../../templates";
+@source "../../apps";
+@source "../../static/js";
+
+@theme {
+  --color-brand-50: #eef7ff;
+  --color-brand-100: #d9edff;
+  --color-brand-200: #bce0ff;
+  --color-brand-300: #8ecfff;
+  --color-brand-400: #59b3ff;
+  --color-brand-500: #338ff5;
+  --color-brand-600: #1d70db;
+  --color-brand-700: #1959b1;
+  --color-brand-800: #1b4c8b;
+  --color-brand-900: #1a406f;
+  --color-brand-950: #132a4a;
+  --color-ink: #172033;
+  --color-canvas: #f4f6f8;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --spacing-touch: 3rem;
+  --radius-panel: 0.75rem;
+  --shadow-panel: 0 1rem 2.5rem rgb(23 32 51 / 8%);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply min-h-screen bg-canvas font-sans text-ink antialiased;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .form-control {
+    @apply mt-2 block min-h-touch w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-600 focus:ring-3 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-100;
+  }
+
+  .form-field input:not([type="checkbox"]),
+  .form-field select,
+  .form-field textarea {
+    @apply mt-2 block min-h-touch w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-600 focus:ring-3 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-100;
+  }
+
+  .form-select {
+    @apply mt-2 block min-h-touch w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 pr-9 text-base text-slate-900 shadow-sm outline-none transition focus:border-brand-600 focus:ring-3 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-100;
+  }
+
+  .btn-primary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+  }
+
+  .btn-danger {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg bg-red-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-700;
+  }
+}

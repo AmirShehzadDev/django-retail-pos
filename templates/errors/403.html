@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Access denied | Retail POS{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-xl py-10 text-center sm:py-16">
+    <p class="text-sm font-bold uppercase tracking-wider text-red-700">Error 403</p>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">You do not have access to this page</h1>
+    <p class="mt-4 leading-7 text-slate-600">Your account does not permit this action. If you believe this is incorrect, ask your shop owner.</p>
+    <a href="{% url 'core:home' %}" class="btn-primary mt-7">Return home</a>
+</div>
+{% endblock %}

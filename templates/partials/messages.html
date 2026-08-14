@@ -1,0 +1,25 @@
+    <section class="pointer-events-none fixed right-4 top-4 z-[100] flex max-h-[calc(100vh-2rem)] w-[min(28rem,calc(100vw-2rem))] flex-col gap-3 overflow-y-auto" aria-label="Notifications" aria-live="polite" data-toast-stack>
+        {% for message in messages %}
+            {% if "error" in message.tags %}
+                <div class="pointer-events-auto flex items-start gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-semibold text-red-950 shadow-xl transition duration-200 motion-reduce:transition-none" role="alert" data-toast>
+                    <p class="min-w-0 flex-1">{{ message }}</p>
+                    <button type="button" class="pointer-events-auto -m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xl font-black text-red-900 hover:bg-red-100 focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-red-700" aria-label="Dismiss notification" data-toast-dismiss>&times;</button>
+                </div>
+            {% elif "success" in message.tags %}
+                <div class="pointer-events-auto flex items-start gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm font-semibold text-emerald-950 shadow-xl transition duration-200 motion-reduce:transition-none" role="status" data-toast data-toast-timeout="5000">
+                    <p class="min-w-0 flex-1">{{ message }}</p>
+                    <button type="button" class="pointer-events-auto -m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xl font-black text-emerald-900 hover:bg-emerald-100 focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-emerald-700" aria-label="Dismiss notification" data-toast-dismiss>&times;</button>
+                </div>
+            {% elif "warning" in message.tags %}
+                <div class="pointer-events-auto flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-950 shadow-xl transition duration-200 motion-reduce:transition-none" role="alert" data-toast>
+                    <p class="min-w-0 flex-1">{{ message }}</p>
+                    <button type="button" class="pointer-events-auto -m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xl font-black text-amber-900 hover:bg-amber-100 focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-amber-700" aria-label="Dismiss notification" data-toast-dismiss>&times;</button>
+                </div>
+            {% else %}
+                <div class="pointer-events-auto flex items-start gap-3 rounded-xl border border-brand-300 bg-brand-50 p-4 text-sm font-semibold text-brand-950 shadow-xl transition duration-200 motion-reduce:transition-none" role="status" data-toast data-toast-timeout="7000">
+                    <p class="min-w-0 flex-1">{{ message }}</p>
+                    <button type="button" class="pointer-events-auto -m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xl font-black text-brand-900 hover:bg-brand-100 focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-brand-700" aria-label="Dismiss notification" data-toast-dismiss>&times;</button>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </section>
