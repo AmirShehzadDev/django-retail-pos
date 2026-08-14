@@ -68,6 +68,12 @@ Separate development, test, and shop installations on one Docker host require un
 and non-conflicting host ports. Release packages never contain `.env`, so copying updated runtime
 files preserves an installation that follows this identity contract.
 
+Milestone 7.1 adds the friendly single-computer alias `retailpos` without changing the loopback bind.
+New configurations include the host/origin from the start; an idempotent elevated Windows setup
+script updates existing configurations and the hosts file. Deployment preflight rejects dollar
+signs in `.env` values before Compose interpolation, and database-container discovery filters
+native output for a valid hexadecimal ID instead of trusting the first output line.
+
 Compose does not run migrations automatically on every container start. Install/update/restore
 scripts invoke `python manage.py migrate --noinput` as a one-off web container after database health.
 

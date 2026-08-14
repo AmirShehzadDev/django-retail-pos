@@ -9,8 +9,11 @@ operation and are not replaced by automated tests.
 
 ## A. Deployment and recovery gate
 
+- [ ] **Friendly startup:** run `Configure-LocalHostname.ps1`, approve elevation, double-click the
+      desktop launcher, and confirm Chrome opens `http://retailpos:8000` without exposing the POS to
+      another computer. Result/notes: ________________________________________________
 - [ ] **Windows restart:** restart the host, sign in, wait for Docker Desktop, and confirm POS opens
-      without manually starting containers. Result/notes: ______________________________
+      through the desktop launcher without manually starting containers. Result/notes: __________
 - [ ] **Offline:** disconnect internet, reload/login, use Products & Stock, POS, Orders, Returns,
       Reports, and Audit. No external asset/service error appears. Result: ______________
 - [ ] **Daily task:** run the scheduled backup task and confirm a new non-empty dump plus SUCCESS log
@@ -21,7 +24,7 @@ operation and are not replaced by automated tests.
 - [ ] **Update rehearsal:** install a versioned test/release package, confirm its displayed health
       version and retained pre-update dump. Result: ___________________________________
 
-All five deployment/recovery checks are required before live pilot approval.
+All six deployment/recovery checks are required before live pilot approval.
 
 ## B. Physical and workflow gate
 

@@ -64,8 +64,8 @@ The default development database port is `127.0.0.1:5433` and can be changed in 
 ## Development setup
 
 ```powershell
-git clone https://github.com/AmirShehzadDev/offline-retail-pos.git
-Set-Location offline-retail-pos
+git clone https://github.com/AmirShehzadDev/django-retail-pos.git
+Set-Location django-retail-pos
 Copy-Item .env.example .env
 notepad .env
 py -3.13 -m venv .venv
@@ -119,7 +119,7 @@ The shop computer runs only locally bundled Docker images and static assets. Bui
 versioned package on the development computer:
 
 ```powershell
-.\deploy\Build-Release.ps1 -Version 1.0.0
+.\deploy\Build-Release.ps1 -Version 1.0.1
 ```
 
 Follow the exact install, update, backup, restore, and rollback procedures in the

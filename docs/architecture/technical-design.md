@@ -384,7 +384,9 @@ No secret, owner password, production database dump, or environment file is comm
 ## 12. Security and operational safeguards
 
 - Django password hashing, CSRF protection, secure session configuration, and server-side permissions remain enabled.
-- The application listens on localhost initially. Future LAN access is limited by Windows Firewall to the private shop subnet; it is never exposed directly to the public internet.
+- The application listens on localhost initially and may use the Windows hosts alias `retailpos` for
+  the same `127.0.0.1` endpoint. Future LAN access is limited by Windows Firewall to the private
+  shop subnet; it is never exposed directly to the public internet.
 - Critical transaction models are not editable through Django admin.
 - Users and products referenced by history are deactivated, not deleted.
 - Application errors are written to rotating local logs without passwords or sensitive form values.

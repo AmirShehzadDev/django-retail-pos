@@ -93,6 +93,20 @@ function Get-PosEnvValue {
     return $null
 }
 
+function Assert-PosEnvironmentFile {
+    $path = Get-PosEnvPath
+    $unsafeKeys = [Collections.Generic.List[string]]::new()
+    foreach ($line in [IO.File]::ReadAllLines($path)) {
+        if ($line -match "^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)$" -and $Matches[2].Contains('$')) {
+            $unsafeKeys.Add($Matches[1])
+        }
+    }
+    if ($unsafeKeys.Count -gt 0) {
+        $keys = ($unsafeKeys | Sort-Object -Unique) -join ", "
+        throw "Dollar signs are not supported in POS .env values because Docker Compose interpolates them. Replace or regenerate values for: $keys"
+    }
+}
+
 function Set-PosEnvValue {
     param(
         [Parameter(Mandatory)][string]$Name,
@@ -155,11 +169,16 @@ function Resolve-PosSafeDirectory {
 
 function Get-PosDatabaseContainer {
     $result = Invoke-PosCompose -Arguments @("ps", "-q", "db")
-    $containerId = (($result | Out-String).Trim() -split "`r?`n")[0]
-    if ([string]::IsNullOrWhiteSpace($containerId)) {
+    $containerIds = @(
+        $result | ForEach-Object { $_.Trim() } | Where-Object { $_ -match "^[0-9a-fA-F]{12,64}$" }
+    )
+    if ($containerIds.Count -eq 0) {
         throw "The POS database container is not running."
     }
-    return $containerId
+    if ($containerIds.Count -gt 1) {
+        throw "Multiple POS database containers were returned; refusing an ambiguous operation."
+    }
+    return $containerIds[0]
 }
 
 function Wait-PosHealth {
@@ -240,9 +259,10 @@ function Import-PosReleaseImage {
 
 function Assert-PosPrerequisites {
     Assert-PosCommand -Name "docker"
+    Get-PosEnvPath | Out-Null
+    Assert-PosEnvironmentFile
     Invoke-PosNative -FilePath "docker" -Arguments @("version", "--format", "{{.Server.Version}}") | Out-Null
     Invoke-PosNative -FilePath "docker" -Arguments @("compose", "version") | Out-Null
-    Get-PosEnvPath | Out-Null
     foreach ($name in @("DJANGO_SECRET_KEY", "POSTGRES_ADMIN_USER", "POSTGRES_ADMIN_PASSWORD", "POS_DB_NAME", "POS_DB_USER", "POS_DB_PASSWORD")) {
         Get-PosEnvValue -Name $name -Required | Out-Null
     }

@@ -3,9 +3,11 @@
 ## Opening the shop
 
 1. Sign in to the dedicated Windows shop account.
-2. Wait for Docker Desktop to say it is running.
-3. Open `http://127.0.0.1:8000/accounts/login/` and sign in.
-4. If the page does not open, run `C:\RetailPOS\deploy\Get-POSStatus.ps1` or contact the operator.
+2. Double-click **Start Retail POS.cmd** on the desktop. It will start Docker Desktop if needed and
+   open the POS when ready.
+3. Sign in at `http://retailpos:8000/accounts/login/`.
+4. If the page does not open after three minutes, run
+   `C:\RetailPOS\deploy\Get-POSStatus.ps1` or contact the operator.
 5. Confirm yesterday/last night's backup exists when the operator has shown you where to check it.
 
 ## Cashier handoff
@@ -35,5 +37,6 @@
 
 1. Do not repeatedly complete the same sale or recreate a possibly completed order.
 2. Record the time, cashier, customer total, and visible message.
-3. Check whether `http://127.0.0.1:8000/health/` opens.
+3. Check whether `http://retailpos:8000/health/` opens. If hostname setup is the problem, the
+   operator can also check `http://127.0.0.1:8000/health/` on the POS computer.
 4. Contact the operator. Do not restore backups or reinstall without authorization.

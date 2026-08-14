@@ -39,6 +39,9 @@ class DeploymentContractTests(SimpleTestCase):
 
         self.assertIn('name: "${COMPOSE_PROJECT_NAME:-pos_codex}"', compose)
         self.assertIn("COMPOSE_PROJECT_NAME=pos_codex", environment)
+        self.assertIn("POS_LOCAL_HOSTNAME=retailpos", environment)
+        self.assertIn("DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,retailpos", environment)
+        self.assertIn("http://retailpos:8000", environment)
         self.assertIn(
             'image: "${POS_APP_IMAGE:-pos-codex}:${POS_APP_VERSION:-development}"',
             compose,
@@ -83,3 +86,23 @@ class DeploymentContractTests(SimpleTestCase):
             "never copy `.env.example` over an existing shop `.env`",
             normalized_runbook,
         )
+
+    def test_local_hostname_and_environment_hardening_contracts(self):
+        module = (self.root / "deploy/PosDeployment.psm1").read_text(encoding="utf-8")
+        setup = (self.root / "deploy/Configure-LocalHostname.ps1").read_text(encoding="utf-8")
+        launcher = (self.root / "deploy/Start-Retail-POS.cmd").read_text(encoding="utf-8")
+
+        self.assertIn("function Assert-PosEnvironmentFile", module)
+        self.assertIn("Dollar signs are not supported", module)
+        self.assertIn('Where-Object { $_ -match "^[0-9a-fA-F]{12,64}$" }', module)
+        self.assertIn("Start-Process", setup)
+        self.assertIn("-Verb RunAs", setup)
+        self.assertIn("System32/drivers/etc/hosts", setup)
+        self.assertIn("127.0.0.1", setup)
+        self.assertIn("DJANGO_ALLOWED_HOSTS", setup)
+        self.assertIn("DJANGO_CSRF_TRUSTED_ORIGINS", setup)
+        self.assertIn("Start Retail POS.cmd", setup)
+        self.assertIn("docker info", launcher)
+        self.assertIn("Start-POS.ps1", launcher)
+        self.assertIn("POS_LOCAL_HOSTNAME", launcher)
+        self.assertIn("Google\\Chrome\\Application\\chrome.exe", launcher)

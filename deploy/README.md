@@ -20,18 +20,18 @@ internet or TeamViewer is unavailable.
 On the development computer, from the clean repository:
 
 ```powershell
-.\deploy\Build-Release.ps1 -Version 1.0.0
+.\deploy\Build-Release.ps1 -Version 1.0.1
 ```
 
-The command runs automated checks, builds `pos-codex:1.0.0`, runs Django deployment checks inside
+The command runs automated checks, builds `pos-codex:1.0.1`, runs Django deployment checks inside
 the image, and creates:
 
 ```text
-releases\pos-codex-1.0.0\
+releases\pos-codex-1.0.1\
   release.json
-  pos-codex-1.0.0.tar
+  pos-codex-1.0.1.tar
   runtime\
-releases\pos-codex-1.0.0.zip
+releases\pos-codex-1.0.1.zip
 ```
 
 Do not edit `release.json` or the image after packaging. The installer rejects a checksum mismatch.
@@ -43,7 +43,7 @@ signature.
 The downloaded release and permanent installation serve different purposes:
 
 ```text
-C:\RetailPOS\incoming\pos-codex-1.0.0\  Immutable extracted release
+C:\RetailPOS\incoming\pos-codex-1.0.1\  Immutable extracted release
 C:\RetailPOS\                            Permanent configuration, scripts, logs, and backups
 ```
 
@@ -54,8 +54,8 @@ the permanent installation. Complete both steps below. Do not run the installer 
 1. Extract the release zip and verify its layout:
 
 ```powershell
-$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.0.0.zip"
-$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.0.0"
+$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.0.1.zip"
+$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.0.1"
 
 New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
 Expand-Archive -LiteralPath $releaseZip -DestinationPath $releaseDirectory
@@ -63,8 +63,8 @@ Expand-Archive -LiteralPath $releaseZip -DestinationPath $releaseDirectory
 Get-ChildItem $releaseDirectory
 ```
 
-The extracted directory must directly contain `release.json`, `pos-codex-1.0.0.tar`, and
-`runtime`. If those entries are inside another nested `pos-codex-1.0.0` directory, use that nested
+The extracted directory must directly contain `release.json`, `pos-codex-1.0.1.tar`, and
+`runtime`. If those entries are inside another nested `pos-codex-1.0.1` directory, use that nested
 directory as `$releaseDirectory` instead.
 
 2. Copy the packaged runtime into the permanent installation:
@@ -95,7 +95,9 @@ notepad .env
 ```
 
 Set `DJANGO_DEBUG=false`. Replace every `replace-...` value with a unique secret/password. Keep
-`POS_APP_BIND=127.0.0.1`, localhost allowed hosts/origins, and the initial `TILL-1` terminal.
+`POS_APP_BIND=127.0.0.1`, `POS_LOCAL_HOSTNAME=retailpos`, the supplied allowed hosts/origins, and
+the initial `TILL-1` terminal. These defaults keep the application on this computer while allowing
+the friendly `http://retailpos:8000` address.
 Keep `COMPOSE_PROJECT_NAME` stable for the lifetime of the installation because it identifies the
 Docker containers and database volume. Use a unique value such as `pos_codex_test` for a separate
 test installation on the same computer; never reuse one project's ports for another project. The
@@ -109,15 +111,19 @@ $bytes = New-Object byte[] 48
 [Convert]::ToBase64String($bytes)
 ```
 
+Run the generator separately for each secret. POS `.env` values must not contain a dollar sign
+(`$`): Docker Compose treats it as variable interpolation. The deployment scripts reject such
+values before starting or backing up the system. Generate a new value instead of escaping it.
+
 4. From the permanent installation directory, install and start using the extracted release:
 
 ```powershell
 .\deploy\Install-POS.ps1 `
-  -ReleaseDirectory .\incoming\pos-codex-1.0.0 `
+  -ReleaseDirectory .\incoming\pos-codex-1.0.1 `
   -InstallDailyBackupTask
 ```
 
-The installer must report that Retail POS `1.0.0` is healthy. If it fails, do not delete volumes or
+The installer must report that Retail POS `1.0.1` is healthy. If it fails, do not delete volumes or
 retry with a different `COMPOSE_PROJECT_NAME`; inspect the displayed error first.
 
 5. For a new database only, bootstrap the shop, terminal, document sequences, and first owner
@@ -129,7 +135,17 @@ docker compose run --rm web python manage.py bootstrap_pos
 
 Do not substitute Django's `createsuperuser`; it does not create the required shop and terminal.
 
-6. Open `http://127.0.0.1:8000/accounts/login/`, sign in, then run:
+6. Configure the friendly local address and install the desktop launcher:
+
+```powershell
+.\deploy\Configure-LocalHostname.ps1
+```
+
+Approve the Windows administrator prompt. The script safely adds `retailpos` to the Windows hosts
+file and existing `.env`, installs **Start Retail POS.cmd** on the current user's desktop, and
+restarts the web container if it is already running. It is safe to run again.
+
+7. Open `http://retailpos:8000/accounts/login/`, sign in, then run:
 
 ```powershell
 .\deploy\Backup-Database.ps1 -Purpose initial-install
@@ -139,6 +155,12 @@ Do not substitute Django's `createsuperuser`; it does not create the required sh
 Never store the owner password in `.env`, scripts, TeamViewer chat, release files, or Git.
 
 ## 4. Normal start, stop, status, and logs
+
+Normally, double-click **Start Retail POS.cmd** on the desktop. It starts Docker Desktop when
+needed, waits for Docker, starts the POS containers, and opens Chrome at the configured local
+address. If Chrome is not installed in its standard location, it uses the Windows default browser.
+
+The operator commands remain available:
 
 ```powershell
 .\deploy\Start-POS.ps1
@@ -187,15 +209,15 @@ on the shop computer and do not use GitHub's automatic source archive.
 1. Transfer and extract the new deployable package:
 
 ```powershell
-$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.1.0.zip"
-$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.1.0"
+$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.0.1.zip"
+$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.0.1"
 
 New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
 Expand-Archive -LiteralPath $releaseZip -DestinationPath $releaseDirectory
 Get-ChildItem $releaseDirectory
 ```
 
-Verify that `release.json`, `pos-codex-1.1.0.tar`, and `runtime` are directly inside
+Verify that `release.json`, `pos-codex-1.0.1.tar`, and `runtime` are directly inside
 `$releaseDirectory`.
 
 2. Confirm and preserve the existing installation identity, then update only the packaged runtime:
@@ -214,11 +236,16 @@ The value printed before and after the copy must be identical. The packaged runt
 database data, logs, or backups. Never run `Copy-Item .env.example .env` during an update. A release
 update must reuse the existing Compose project and database volume.
 
+If this installation previously used a secret containing `$`, correct it before running the new
+deployment scripts. For the known `$npid` case, remove that exact text from the value; this preserves
+the value Docker Compose was already using. Do not publish or paste the full secret. Future secrets
+must be regenerated without `$`.
+
 3. Run the update from the permanent installation:
 
 ```powershell
 Set-Location C:\RetailPOS
-.\deploy\Install-Update.ps1 -ReleaseDirectory .\incoming\pos-codex-1.1.0
+.\deploy\Install-Update.ps1 -ReleaseDirectory .\incoming\pos-codex-1.0.1
 ```
 
 The command validates/loads the image, creates a verified pre-update dump, stops only the web
@@ -228,6 +255,15 @@ post-update smoke check:
 ```powershell
 .\deploy\Get-POSStatus.ps1
 ```
+
+For the first update that includes local-startup support, configure the hostname and launcher after
+the update succeeds:
+
+```powershell
+.\deploy\Configure-LocalHostname.ps1
+```
+
+Approve the Windows prompt. The command preserves the database and is safe to rerun.
 
 If Docker reports that the database port is already allocated, stop. Run `docker compose config`
 and confirm its top-level `name` matches the existing container prefix before retrying. Do not
@@ -255,7 +291,7 @@ version and backup path printed by the failed update:
 ```powershell
 .\deploy\Rollback-Release.ps1 `
   -PreviousVersion 1.0.0 `
-  -PreUpdateBackup .\var\backups\pos-YYYYMMDD-HHMMSS-pre-update-1.1.0.dump `
+  -PreUpdateBackup .\var\backups\pos-YYYYMMDD-HHMMSS-pre-update-1.0.1.dump `
   -ConfirmRollback
 ```
 
@@ -299,6 +335,13 @@ be exposed directly to the public internet.
 - Docker is unavailable: start Docker Desktop under the dedicated shop account and retry.
 - Database is unhealthy: `docker compose logs --tail 200 db`; do not delete its volume.
 - Web is unhealthy: `docker compose logs --tail 200 web` and verify `.env` hosts/secrets/version.
+- Unsafe `.env` value: regenerate the named secret without `$`; Docker Compose interpolates dollar
+  signs before passing values to containers.
+- `retailpos` hostname conflict: inspect `C:\Windows\System32\drivers\etc\hosts`; do not overwrite a
+  mapping to another address. Choose a different single-label `POS_LOCAL_HOSTNAME` or resolve the
+  conflicting local software first.
+- Desktop launcher fails: start it again after Docker Desktop finishes loading, then run
+  `.\deploy\Get-POSStatus.ps1` and inspect the displayed error.
 - Checksum mismatch: discard the transferred package and transfer the original zip again.
 - Backup failed: inspect `var\log\backup.log`, confirm free disk space and DB health, then rerun.
 - Port 8000 is occupied: identify the conflicting local program before changing the configured port.

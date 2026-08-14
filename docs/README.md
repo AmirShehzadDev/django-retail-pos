@@ -31,6 +31,7 @@ tasks, and completion evidence using consistent filenames.
 - [Milestone 5 - Returns and voids](milestones/m5-returns-voids/)
 - [Milestone 6 - Reporting and audit](milestones/m6-reporting-audit/)
 - [Milestone 7 - Offline deployment](milestones/m7-offline-deployment/)
+- [Milestone 7.1 - Local startup](milestones/m7.1-local-startup/)
 
 These are historical engineering and acceptance records. The root README and current code are the
 primary entry points for users; the project technical design and latest milestone records are the

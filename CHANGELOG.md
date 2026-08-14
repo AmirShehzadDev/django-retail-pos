@@ -11,6 +11,8 @@ All notable public changes will be documented in this file. The project follows
   Actions verification workflow.
 - Complete single-shop MVP covering users, products, inventory, active POS orders, cash checkout,
   completed-order history, returns, voids, daily reporting, audit history, and offline deployment.
+- One-time Windows local-hostname setup and a desktop launcher for starting Docker Desktop, the POS,
+  and `http://retailpos:8000` in Chrome.
 
 ### Changed
 
@@ -23,6 +25,8 @@ All notable public changes will be documented in this file. The project follows
 - Compose project identity is configurable and persistent through `COMPOSE_PROJECT_NAME`, allowing
   separate development, test, and shop installations to reuse their correct database volumes
   during updates.
+- Deployment scripts now reject dollar signs in `.env` values before Docker Compose can interpolate
+  them, and database backup discovery ignores warning output when selecting the container.
 
 ### Security
 

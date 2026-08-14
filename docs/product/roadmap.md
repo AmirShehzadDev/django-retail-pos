@@ -377,6 +377,32 @@ stock ledger or cashier permissions.
 - Scanner, quick-create, signed-change, cashier-handoff, concurrent-checkout, negative-stock, linked-return, void, and inventory-reconciliation scenarios pass.
 - The shop completes a supervised pilot without unexplained stock or cash discrepancies.
 
+## Milestone 7.1 - Local startup and deployment hardening
+
+**Goal:** Make the one-computer Windows deployment easier to start and safer around local
+configuration and backups.
+
+**Status:** Implementation and automated verification complete; pending user verification and
+versioned release packaging
+
+**Planning documents:** [Feature specification](../milestones/m7.1-local-startup/feature-spec.md),
+[technical design](../milestones/m7.1-local-startup/technical-design.md), and
+[development tasks](../milestones/m7.1-local-startup/development-tasks.md) (planning review passed)
+
+### Deliverables
+
+- Friendly loopback-only `http://retailpos:8000` address.
+- Idempotent Windows hostname configuration and desktop launcher.
+- Strict protection against Docker Compose interpolation in `.env` secrets.
+- Backup container discovery that cannot consume warning text as an identifier.
+- Versioned `1.0.1` offline update package after verification and release approval.
+
+### Exit criteria
+
+- Automated deployment, documentation, formatting, and regression checks pass.
+- The user verifies Windows elevation, hosts resolution, double-click startup, Chrome opening,
+  restart behavior, and a successful database backup on the shop computer.
+
 ## MVP completion
 
 The MVP is complete when Milestones 0-7 pass their exit criteria and every acceptance criterion in `docs/product/mvp-requirements.md` has evidence from an automated test, deployment check, or documented pilot result.
