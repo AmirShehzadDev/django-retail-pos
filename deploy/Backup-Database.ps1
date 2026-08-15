@@ -33,6 +33,7 @@ try {
     $hostTemp = "$finalPath.partial"
 
     Invoke-PosCompose -Arguments @("up", "-d", "db") | Out-Host
+    Wait-PosDatabase
     $containerId = Get-PosDatabaseContainer
     $dumpCommand = 'rm -f "$1" && PGPASSWORD="$POS_DB_PASSWORD" pg_dump --username="$POS_DB_USER" --dbname="$POS_DB_NAME" --format=custom --file="$1" && pg_restore --list "$1" >/dev/null'
     Invoke-PosCompose -Arguments @("exec", "-T", "db", "sh", "-c", $dumpCommand, "--", $containerTemp) | Out-Null

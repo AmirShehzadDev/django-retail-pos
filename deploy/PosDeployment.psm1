@@ -181,6 +181,32 @@ function Get-PosDatabaseContainer {
     return $containerIds[0]
 }
 
+function Wait-PosDatabase {
+    param([int]$TimeoutSeconds = 120)
+    $databaseName = Get-PosEnvValue -Name "POS_DB_NAME" -Required
+    $databaseUser = Get-PosEnvValue -Name "POS_DB_USER" -Required
+    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+    do {
+        try {
+            $processName = (Invoke-PosCompose -Arguments @("exec", "-T", "db", "cat", "/proc/1/comm") | Out-String).Trim()
+            if ($processName -eq "postgres") {
+                $queryResult = Invoke-PosCompose -Arguments @(
+                    "exec", "-T", "db", "psql",
+                    "--username=$databaseUser", "--dbname=$databaseName",
+                    "--tuples-only", "--no-align", "--command=SELECT/**/1"
+                )
+                if (@($queryResult | ForEach-Object { $_.Trim() } | Where-Object { $_ -eq "1" }).Count -eq 1) {
+                    return
+                }
+            }
+        }
+        catch {
+        }
+        Start-Sleep -Seconds 2
+    } while ([DateTime]::UtcNow -lt $deadline)
+    throw "The POS database did not become ready within $TimeoutSeconds seconds."
+}
+
 function Wait-PosHealth {
     param([int]$TimeoutSeconds = 120)
     $port = Get-PosEnvValue -Name "POS_APP_PORT"
