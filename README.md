@@ -119,7 +119,7 @@ The shop computer runs only locally bundled Docker images and static assets. Bui
 versioned package on the development computer:
 
 ```powershell
-.\deploy\Build-Release.ps1 -Version 1.0.1
+.\deploy\Build-Release.ps1 -Version 1.0.2
 ```
 
 Follow the exact install, update, backup, restore, and rollback procedures in the

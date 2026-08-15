@@ -3,6 +3,7 @@ param(
     [string]$Destination,
     [string]$ExternalCopyDestination,
     [ValidateRange(1, 365)][int]$RetentionDays = 0,
+    [ValidateRange(2, 1000)][int]$RetentionCount = 0,
     [string]$Purpose = "daily",
     [switch]$SkipDeploymentLock
 )
@@ -22,6 +23,13 @@ try {
     if ($RetentionDays -eq 0) {
         $configuredRetention = Get-PosEnvValue -Name "POS_BACKUP_RETENTION_DAYS"
         $RetentionDays = if ($configuredRetention) { [int]$configuredRetention } else { 7 }
+    }
+    if ($RetentionCount -eq 0) {
+        $configuredCount = Get-PosEnvValue -Name "POS_BACKUP_RETENTION_COUNT"
+        $RetentionCount = if ($configuredCount) { [int]$configuredCount } else { 10 }
+    }
+    if ($RetentionCount -lt 2 -or $RetentionCount -gt 1000) {
+        throw "POS_BACKUP_RETENTION_COUNT must be between 2 and 1000."
     }
     $backupDirectory = Resolve-PosSafeDirectory -Path $Destination -Create
     $logDirectory = Resolve-PosSafeDirectory -Path "var/log" -Create
@@ -45,9 +53,37 @@ try {
     $hostTemp = $null
 
     $cutoff = (Get-Date).AddDays(-$RetentionDays)
-    Get-ChildItem -LiteralPath $backupDirectory -File -Filter "pos-*.dump" |
-        Where-Object { $_.LastWriteTime -lt $cutoff } |
-        Remove-Item -Force
+    $backups = @(
+        Get-ChildItem -LiteralPath $backupDirectory -File -Filter "pos-*.dump" |
+            Sort-Object LastWriteTime -Descending
+    )
+    $latestPreUpdate = $backups | Where-Object { $_.Name -match "-pre-update-" } | Select-Object -First 1
+    $protectedPaths = @($finalPath)
+    if ($latestPreUpdate) { $protectedPaths += $latestPreUpdate.FullName }
+    $protectedPaths = @($protectedPaths | Select-Object -Unique)
+
+    $eligibleBackups = @(
+        $backups | Where-Object {
+            $_.LastWriteTime -ge $cutoff -or $protectedPaths -contains $_.FullName
+        }
+    )
+    $keepPaths = [Collections.Generic.List[string]]::new()
+    foreach ($path in $protectedPaths) {
+        if ($keepPaths.Count -lt $RetentionCount -and $keepPaths -notcontains $path) {
+            $keepPaths.Add($path)
+        }
+    }
+    foreach ($backup in $eligibleBackups) {
+        if ($keepPaths.Count -ge $RetentionCount) { break }
+        if ($keepPaths -notcontains $backup.FullName) { $keepPaths.Add($backup.FullName) }
+    }
+    $removedCount = 0
+    foreach ($backup in $backups) {
+        if ($keepPaths -notcontains $backup.FullName) {
+            Remove-Item -LiteralPath $backup.FullName -Force
+            $removedCount += 1
+        }
+    }
 
     if (-not [string]::IsNullOrWhiteSpace($ExternalCopyDestination)) {
         $externalDirectory = Resolve-PosSafeDirectory -Path $ExternalCopyDestination -Create
@@ -55,6 +91,7 @@ try {
     }
     "$(Get-Date -Format o) SUCCESS $finalPath" | Out-File -LiteralPath $logPath -Append -Encoding utf8
     Write-Host "Verified backup created: $finalPath"
+    Write-Host "Local backup retention: kept $($keepPaths.Count), removed $removedCount, maximum $RetentionCount."
     return $finalPath
 }
 catch {

@@ -96,8 +96,13 @@ if (-not $SkipDesktopLauncher) {
     if ([string]::IsNullOrWhiteSpace($desktop)) {
         throw "The Windows Desktop folder could not be resolved."
     }
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "Start-Retail-POS.cmd") `
-        -Destination (Join-Path $desktop "Start Retail POS.cmd") -Force
+    foreach ($launcher in @(
+        @{ Source = "Start-Retail-POS.cmd"; Destination = "Start Retail POS.cmd" },
+        @{ Source = "Stop-Retail-POS.cmd"; Destination = "Stop Retail POS.cmd" }
+    )) {
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot $launcher.Source) `
+            -Destination (Join-Path $desktop $launcher.Destination) -Force
+    }
 }
 
 $webRestarted = $false
@@ -121,6 +126,5 @@ if (-not $NoWebRestart) {
 }
 
 Write-Host "Local POS hostname configured: http://${hostname}:$port"
-if (-not $SkipDesktopLauncher) { Write-Host "Desktop launcher installed: Start Retail POS.cmd" }
+if (-not $SkipDesktopLauncher) { Write-Host "Desktop launchers installed: Start Retail POS.cmd and Stop Retail POS.cmd" }
 if ($webRestarted) { Write-Host "The POS web container was recreated and is healthy." }
-

@@ -9,7 +9,7 @@ PowerShell from the installation folder, normally `C:\RetailPOS`. Never use `doc
 - Windows 11 with Docker Desktop using Linux containers.
 - A dedicated Windows shop account configured to sign in when the shop opens.
 - Docker Desktop **Start Docker Desktop when you sign in** enabled for that account.
-- At least 10 GB free space plus room for seven database backups and two application images.
+- At least 10 GB free space plus room for ten database backups and two application images.
 - Port 8000 available on loopback.
 
 TeamViewer is optional and only provides remote operator access. The POS continues locally if the
@@ -20,18 +20,18 @@ internet or TeamViewer is unavailable.
 On the development computer, from the clean repository:
 
 ```powershell
-.\deploy\Build-Release.ps1 -Version 1.0.1
+.\deploy\Build-Release.ps1 -Version 1.0.2
 ```
 
-The command runs automated checks, builds `pos-codex:1.0.1`, runs Django deployment checks inside
+The command runs automated checks, builds `pos-codex:1.0.2`, runs Django deployment checks inside
 the image, and creates:
 
 ```text
-releases\pos-codex-1.0.1\
+releases\pos-codex-1.0.2\
   release.json
-  pos-codex-1.0.1.tar
+  pos-codex-1.0.2.tar
   runtime\
-releases\pos-codex-1.0.1.zip
+releases\pos-codex-1.0.2.zip
 ```
 
 Do not edit `release.json` or the image after packaging. The installer rejects a checksum mismatch.
@@ -43,7 +43,7 @@ signature.
 The downloaded release and permanent installation serve different purposes:
 
 ```text
-C:\RetailPOS\incoming\pos-codex-1.0.1\  Immutable extracted release
+C:\RetailPOS\incoming\pos-codex-1.0.2\  Immutable extracted release
 C:\RetailPOS\                            Permanent configuration, scripts, logs, and backups
 ```
 
@@ -54,8 +54,8 @@ the permanent installation. Complete both steps below. Do not run the installer 
 1. Extract the release zip and verify its layout:
 
 ```powershell
-$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.0.1.zip"
-$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.0.1"
+$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.0.2.zip"
+$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.0.2"
 
 New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
 Expand-Archive -LiteralPath $releaseZip -DestinationPath $releaseDirectory
@@ -63,8 +63,8 @@ Expand-Archive -LiteralPath $releaseZip -DestinationPath $releaseDirectory
 Get-ChildItem $releaseDirectory
 ```
 
-The extracted directory must directly contain `release.json`, `pos-codex-1.0.1.tar`, and
-`runtime`. If those entries are inside another nested `pos-codex-1.0.1` directory, use that nested
+The extracted directory must directly contain `release.json`, `pos-codex-1.0.2.tar`, and
+`runtime`. If those entries are inside another nested `pos-codex-1.0.2` directory, use that nested
 directory as `$releaseDirectory` instead.
 
 2. Copy the packaged runtime into the permanent installation:
@@ -119,11 +119,11 @@ values before starting or backing up the system. Generate a new value instead of
 
 ```powershell
 .\deploy\Install-POS.ps1 `
-  -ReleaseDirectory .\incoming\pos-codex-1.0.1 `
+  -ReleaseDirectory .\incoming\pos-codex-1.0.2 `
   -InstallDailyBackupTask
 ```
 
-The installer must report that Retail POS `1.0.1` is healthy. If it fails, do not delete volumes or
+The installer must report that Retail POS `1.0.2` is healthy. If it fails, do not delete volumes or
 retry with a different `COMPOSE_PROJECT_NAME`; inspect the displayed error first.
 
 5. For a new database only, bootstrap the shop, terminal, document sequences, and first owner
@@ -160,6 +160,14 @@ Normally, double-click **Start Retail POS.cmd** on the desktop. It starts Docker
 needed, waits for Docker, starts the POS containers, and opens Chrome at the configured local
 address. If Chrome is not installed in its standard location, it uses the Windows default browser.
 
+Double-click **Stop Retail POS.cmd** to stop both POS containers while retaining the database volume,
+backups, logs, and configuration, then shut down Docker Desktop gracefully. Before stopping
+anything, the command creates and validates a fresh `shutdown` database backup. If that backup
+fails, shutdown is cancelled and the POS plus Docker Desktop remain running. Because stopping
+Docker Desktop also stops every unrelated Docker container on the computer, use this only on the
+dedicated shop host. The next Start command starts Docker Desktop and the same retained POS
+installation again.
+
 The operator commands remain available:
 
 ```powershell
@@ -194,8 +202,10 @@ Install/update the daily 23:00 task:
 
 The dedicated Windows account must be signed in and Docker Desktop running at that time. In Task
 Scheduler, run **Retail POS Daily Backup** once immediately; then confirm a new `pos-*.dump` under
-`var\backups` and a success line in `var\log\backup.log`. Files older than seven days are pruned
-only from the configured primary backup directory.
+`var\backups` and a success line in `var\log\backup.log`. After a fresh backup is verified, local
+dumps older than seven days are pruned and no more than the newest ten are retained. The newest
+pre-update rollback dump is protected within that ten-file limit. Cleanup applies only to the
+configured primary backup directory; external copies are not pruned.
 
 ## 6. Install an update through TeamViewer or USB
 
@@ -209,15 +219,15 @@ on the shop computer and do not use GitHub's automatic source archive.
 1. Transfer and extract the new deployable package:
 
 ```powershell
-$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.0.1.zip"
-$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.0.1"
+$releaseZip = "$env:USERPROFILE\Downloads\pos-codex-1.0.2.zip"
+$releaseDirectory = "C:\RetailPOS\incoming\pos-codex-1.0.2"
 
 New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
 Expand-Archive -LiteralPath $releaseZip -DestinationPath $releaseDirectory
 Get-ChildItem $releaseDirectory
 ```
 
-Verify that `release.json`, `pos-codex-1.0.1.tar`, and `runtime` are directly inside
+Verify that `release.json`, `pos-codex-1.0.2.tar`, and `runtime` are directly inside
 `$releaseDirectory`.
 
 2. Confirm and preserve the existing installation identity, then update only the packaged runtime:
@@ -245,7 +255,7 @@ must be regenerated without `$`.
 
 ```powershell
 Set-Location C:\RetailPOS
-.\deploy\Install-Update.ps1 -ReleaseDirectory .\incoming\pos-codex-1.0.1
+.\deploy\Install-Update.ps1 -ReleaseDirectory .\incoming\pos-codex-1.0.2
 ```
 
 The command validates/loads the image, creates a verified pre-update dump, stops only the web
@@ -290,8 +300,8 @@ version and backup path printed by the failed update:
 
 ```powershell
 .\deploy\Rollback-Release.ps1 `
-  -PreviousVersion 1.0.0 `
-  -PreUpdateBackup .\var\backups\pos-YYYYMMDD-HHMMSS-pre-update-1.0.1.dump `
+  -PreviousVersion 1.0.1 `
+  -PreUpdateBackup .\var\backups\pos-YYYYMMDD-HHMMSS-pre-update-1.0.2.dump `
   -ConfirmRollback
 ```
 

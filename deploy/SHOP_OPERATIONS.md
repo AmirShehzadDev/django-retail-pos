@@ -29,9 +29,12 @@
 
 1. Complete or deliberately leave/clear each active customer basket as appropriate.
 2. Log out of the POS.
-3. Keep the dedicated Windows account signed in and Docker Desktop running through the scheduled
-   backup time (default 23:00).
-4. Do not use Docker cleanup/reset/volume commands.
+3. Double-click **Stop Retail POS.cmd**. It first creates and validates a fresh shutdown backup. Only
+   after success does it stop the POS containers and Docker Desktop, which also stops every other
+   Docker container on the computer.
+4. If the shutdown backup fails, leave the POS and Docker Desktop running and contact the operator;
+   do not bypass the backup or force-close Docker processes.
+5. Do not use Docker cleanup/reset/volume commands.
 
 ## If the POS is unavailable
 

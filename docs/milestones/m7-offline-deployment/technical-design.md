@@ -152,7 +152,9 @@ Input: release directory.
 - Default target: `var/backups` or configured `POS_BACKUP_DIR`.
 - Generate a custom-format dump inside the DB container, validate it there, copy it to a temporary
   host filename, atomically rename it, and remove the exact temporary container file.
-- Prune only `pos-*.dump` files older than seven days in the validated target.
+- After a fresh verified backup succeeds, prune only `pos-*.dump` files in the validated target:
+  retain files no older than seven days, cap local retention at ten total dumps, and protect the
+  newest pre-update rollback dump within that ten-file limit.
 - Append success/failure information without credentials to `var/log/backup.log`.
 - Optional external copy target receives the verified final dump.
 
@@ -199,6 +201,7 @@ Add the following non-secret configuration keys to `.env.example`:
 - `POS_APP_PORT=8000`
 - `POS_BACKUP_DIR=var/backups`
 - `POS_BACKUP_RETENTION_DAYS=7`
+- `POS_BACKUP_RETENTION_COUNT=10`
 
 Production uses `DJANGO_DEBUG=false`, a random 32+ character secret, unique database passwords, and
 localhost allowed hosts/origins. `.env` remains ignored and is not copied into the image or package.
